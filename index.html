@@ -90,20 +90,13 @@
 
     <div id="end-game-screen" style="display: none;">
         <div id="end-game-content">
-            <h2>Gateway Connection Established!</h2>
-            <p>Congratulations, Architect! You have successfully brought the Gateway Datacenter online and opened The Conduit.</p>
-            <p>Your final configuration:</p>
-            <ul id="end-game-stats">
-                <li>Final Total EPS: <span id="finalEpsStat">0</span></li>
-                <li>Click Upgrade Level: <span id="finalClickLevelStat">0</span></li>
-                <li>Raspberry Pis: <span id="finalRpiStat">0</span></li>
-                <li>Desktop GPUs: <span id="finalDesktopStat">0</span></li>
-                <li>Mining Rigs: <span id="finalRigStat">0</span></li>
-                <li>Server Racks: <span id="finalServerRackStat">0</span></li>
-                <li>Fusion Reactors: <span id="finalFusionReactorStat">0</span></li>
-            </ul>
-            <p>The universe echoes with the hum of your creation. What possibilities await?</p>
-            <button id="play-again-button">Initiate New Cycle</button>
+            <h2>SYSTEM ONLINE</h2>
+            <pre id="ai-console-output"></pre>
+            <div id="ai-interaction-area" style="display: none;">
+                <!-- Stats could be re-integrated here if desired -->
+                <p id="ai-dialogue-prompt"></p> 
+                <button id="ai-continue-button">[ Stand By ]</button>
+            </div>
         </div>
     </div>
 
