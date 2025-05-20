@@ -22,14 +22,38 @@ button {
     padding: 10px 20px;
     font-size: 16px;
     cursor: pointer;
-    background-color: #007bff;
-    color: white;
-    border: none;
+    background-color: #5a6268; /* Default (unaffordable) - Slightly desaturated blue/grey */
+    color: #ccc;
+    border: 1px solid #494f54; /* Darker border for unaffordable */
     border-radius: 4px;
+    transition: background-color 0.2s, color 0.2s, border-color 0.2s, box-shadow 0.2s;
 }
 
-button:hover {
+button.affordable {
+    background-color: #007bff;
+    color: white;
+    border-color: #0056b3;
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+button:hover:not(:disabled):not(.affordable) { /* Hover for default/unaffordable */
+    background-color: #6c757d;
+    border-color: #5a6268;
+}
+
+button.affordable:hover:not(:disabled) { /* Hover for affordable */
     background-color: #0056b3;
+    border-color: #004085;
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.75);
+}
+
+/* Disabled state will override affordable, but good to have specific :disabled styles */
+button:disabled {
+    background-color: #343a40 !important; /* Dark grey, ensure it overrides */
+    color: #6c757d !important;
+    border-color: #23272b !important;
+    cursor: not-allowed;
+    box-shadow: none !important;
 }
 
 /* Dark Mode Styles */
@@ -44,12 +68,34 @@ body.dark-mode #game-container {
 }
 
 body.dark-mode button {
+    /* Default (unaffordable) for dark mode */
     background-color: #555;
-    color: #f0f0f0;
+    color: #bbb; /* Slightly brighter than pure #ccc for better readability */
+    border: 1px solid #444;
 }
 
-body.dark-mode button:hover {
-    background-color: #777;
+body.dark-mode button.affordable {
+    background-color: #007bff; /* Keep blue for affordable or choose a dark-mode friendly highlight */
+    color: white;
+    border-color: #0056b3; /* Or a slightly lighter blue like #3689d4 */
+    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+}
+
+body.dark-mode button:hover:not(:disabled):not(.affordable) { /* Hover for default/unaffordable in dark mode */
+    background-color: #666;
+    border-color: #555;
+}
+
+body.dark-mode button.affordable:hover:not(:disabled) { /* Hover for affordable in dark mode */
+    background-color: #0056b3;
+    border-color: #004085;
+    box-shadow: 0 0 8px rgba(0, 123, 255, 0.75);
+}
+
+body.dark-mode button:disabled {
+    background-color: #2a2a2a !important;
+    color: #666 !important;
+    border-color: #222 !important;
 }
 
 /* Generator Upgrade Styling */
@@ -151,42 +197,38 @@ body.dark-mode #system-log-header {
 }
 
 .log-message {
-    padding: 2px 0;
-    border-bottom: 1px dashed #666; /* Dark mode separator */
+    padding: 2px 5px;
+    margin-bottom: 3px; /* Spacing between messages */
+    border-radius: 3px;
+    font-size: 0.9em;
 }
 
-body:not(.dark-mode) .log-message {
-    border-bottom: 1px dashed #eee; /* Light mode separator */
+/* System Log Message Types */
+.log-info {
+    color: inherit; /* Default, inherit text color from parent */
 }
 
-.log-message:last-child {
-    border-bottom: none;
+.log-milestone {
+    color: #28a745; /* Green for milestones/unlocks */
+    font-weight: bold;
 }
 
-/* Different message types (example) */
-.log-message.unlock {
-    color: #28a745; /* Green for unlocks */
+.log-purchase {
+    color: #17a2b8; /* Cyan/Info blue for purchases */
 }
 
-body:not(.dark-mode) .log-message.unlock {
-    color: #218838;
+.log-warning {
+    color: #ffc107; /* Amber/Warning yellow */
 }
 
-.log-message.milestone {
-    color: #ffc107; /* Yellow for milestones */
+.log-error {
+    color: #dc3545; /* Red for errors */
+    font-weight: bold;
 }
 
-body:not(.dark-mode) .log-message.milestone {
-    color: #e0a800;
-}
-
-.log-message.lore {
+.log-system-event {
+    color: #6c757d; /* Muted grey for general system events */
     font-style: italic;
-    color: #adb5bd; /* Muted color for lore */
-}
-
-body:not(.dark-mode) .log-message.lore {
-    color: #6c757d;
 }
 
 /* Locked Upgrade Styling */
@@ -230,4 +272,64 @@ body:not(.dark-mode) #reset-container {
 
 #reset-game-button:hover {
     background-color: #c82333; /* Darker red on hover */
+}
+
+/* End Game Screen Styling */
+#end-game-screen {
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100%;
+    height: 100%;
+    background-color: rgba(0, 0, 0, 0.85); /* Darker overlay */
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    z-index: 1000; /* Ensure it's on top */
+    color: #f0f0f0; /* Light text for the overlay */
+    padding: 20px; /* Add padding for smaller screens */
+    box-sizing: border-box; /* Include padding in width/height */
+}
+
+#end-game-content {
+    background-color: #333; /* Dark background for the content box */
+    padding: 30px;
+    border-radius: 8px;
+    text-align: center;
+    max-width: 600px;
+    box-shadow: 0 0 20px rgba(255, 255, 255, 0.2);
+}
+
+#end-game-content h2 {
+    color: #00eaff; /* Bright cyan for the title */
+    margin-top: 0;
+}
+
+#end-game-stats {
+    list-style-type: none;
+    padding: 0;
+    margin: 20px 0;
+    text-align: left;
+}
+
+#end-game-stats li {
+    margin-bottom: 8px;
+    font-size: 1.1em;
+}
+
+#end-game-stats span {
+    font-weight: bold;
+    color: #ffc107; /* Amber for stat values */
+}
+
+#play-again-button {
+    background-color: #28a745; /* Green for play again */
+    color: white;
+    padding: 12px 25px;
+    font-size: 1.1em;
+    margin-top: 20px;
+}
+
+#play-again-button:hover {
+    background-color: #218838;
 } 

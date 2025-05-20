@@ -75,6 +75,7 @@ let aiCoreUnlocked = false;
 
 let totalEps = 0;
 let gameWon = false; // Flag to track win state
+let shownMilestones = {}; // Object to track shown milestone messages
 
 // --- LOCALSTORAGE SAVE/LOAD ---
 const GAME_SAVE_KEY = 'gatewayGeneratorSave';
@@ -85,6 +86,17 @@ const MAX_LOG_MESSAGES = 20; // Keep the log from getting too long
 
 // Reset Game Button Element
 const resetGameButton = document.getElementById('reset-game-button');
+
+// End Game Screen Elements
+const endGameScreen = document.getElementById('end-game-screen');
+const finalEpsStat = document.getElementById('finalEpsStat');
+const finalClickLevelStat = document.getElementById('finalClickLevelStat');
+const finalRpiStat = document.getElementById('finalRpiStat');
+const finalDesktopStat = document.getElementById('finalDesktopStat');
+const finalRigStat = document.getElementById('finalRigStat');
+const finalServerRackStat = document.getElementById('finalServerRackStat');
+const finalFusionReactorStat = document.getElementById('finalFusionReactorStat');
+const playAgainButton = document.getElementById('play-again-button');
 
 function resetGameToDefaults() {
     energy = 0;
@@ -128,6 +140,7 @@ function resetGameToDefaults() {
     aiCoreUnlocked = false;
 
     gameWon = false; // Reset win state
+    shownMilestones = {}; // Reset shown milestones
     // Total EPS will be recalculated by calculateAllEps()
     // Individual generator EPS will be zero due to owned counts being zero.
 }
@@ -165,6 +178,7 @@ function saveGameState() {
         aiCoreCurrentCost,
         aiCoreUnlocked,
         gameWon,
+        shownMilestones,
         // Note: Base costs and base EPS are constants, no need to save.
         // Total EPS is calculated, no need to save.
     };
@@ -188,7 +202,7 @@ function loadGameState() {
                 calculateAllEps(); // Recalculate EPS based on defaults
                 updateDisplays();   // Update UI based on defaults
                 addLogMessage("Previous Gateway construction complete. System reset for new cycle.", "milestone");
-                // The initial "System rebooted..." message will still be added below.
+                // The initial "System rebooted..." message will still be added below, which is fine.
             } else {
                 // Load game state as usual if not won, or if gameWon flag is missing (older save)
                 energy = savedState.energy !== undefined ? savedState.energy : 0;
@@ -198,23 +212,28 @@ function loadGameState() {
 
                 rpiOwned = savedState.rpiOwned !== undefined ? savedState.rpiOwned : 0;
                 rpiCurrentCost = savedState.rpiCurrentCost !== undefined ? savedState.rpiCurrentCost : RPI_BASE_COST;
+                // rpiTotalEps will be recalculated
 
                 desktopOwned = savedState.desktopOwned !== undefined ? savedState.desktopOwned : 0;
                 desktopCurrentCost = savedState.desktopCurrentCost !== undefined ? savedState.desktopCurrentCost : DESKTOP_BASE_COST;
                 desktopGpuUnlocked = savedState.desktopGpuUnlocked !== undefined ? savedState.desktopGpuUnlocked : false;
+                // desktopTotalEps will be recalculated
 
                 rigOwned = savedState.rigOwned !== undefined ? savedState.rigOwned : 0;
                 rigCurrentCost = savedState.rigCurrentCost !== undefined ? savedState.rigCurrentCost : RIG_BASE_COST;
                 miningRigUnlocked = savedState.miningRigUnlocked !== undefined ? savedState.miningRigUnlocked : false;
+                // rigTotalEps will be recalculated
 
                 serverRackOwned = savedState.serverRackOwned !== undefined ? savedState.serverRackOwned : 0;
                 serverRackCurrentCost = savedState.serverRackCurrentCost !== undefined ? savedState.serverRackCurrentCost : SERVER_RACK_BASE_COST;
                 serverRackUnlocked = savedState.serverRackUnlocked !== undefined ? savedState.serverRackUnlocked : false;
+                // serverRackTotalEps will be recalculated
 
                 fusionReactorOwned = savedState.fusionReactorOwned !== undefined ? savedState.fusionReactorOwned : 0;
                 fusionReactorCurrentCost = savedState.fusionReactorCurrentCost !== undefined ? savedState.fusionReactorCurrentCost : FUSION_REACTOR_BASE_COST;
                 fusionReactorUnlocked = savedState.fusionReactorUnlocked !== undefined ? savedState.fusionReactorUnlocked : false;
-
+                // fusionReactorTotalEps will be recalculated
+                
                 foundationCoolingOwned = savedState.foundationCoolingOwned !== undefined ? savedState.foundationCoolingOwned : 0;
                 foundationCoolingCurrentCost = savedState.foundationCoolingCurrentCost !== undefined ? savedState.foundationCoolingCurrentCost : FOUNDATION_COOLING_BASE_COST;
                 foundationCoolingUnlocked = savedState.foundationCoolingUnlocked !== undefined ? savedState.foundationCoolingUnlocked : false;
@@ -230,37 +249,77 @@ function loadGameState() {
                 aiCoreOwned = savedState.aiCoreOwned !== undefined ? savedState.aiCoreOwned : 0;
                 aiCoreCurrentCost = savedState.aiCoreCurrentCost !== undefined ? savedState.aiCoreCurrentCost : AI_CORE_BASE_COST;
                 aiCoreUnlocked = savedState.aiCoreUnlocked !== undefined ? savedState.aiCoreUnlocked : false;
-                gameWon = savedState.gameWon !== undefined ? savedState.gameWon : false; // Should be false here
-                
+
+                gameWon = savedState.gameWon !== undefined ? savedState.gameWon : false;
+                shownMilestones = savedState.shownMilestones !== undefined ? savedState.shownMilestones : {}; // Load shown milestones
                 console.log("Game loaded!");
             }
+            
+            // Ensure all base costs and EPS are initialized correctly after loading.
+            // This handles cases where new constants might have been added/changed in an update
+            // or if a saved value was somehow corrupted for an unowned item.
+            if (rpiOwned === 0) rpiCurrentCost = RPI_BASE_COST;
+            if (desktopOwned === 0) desktopCurrentCost = DESKTOP_BASE_COST;
+            if (rigOwned === 0) rigCurrentCost = RIG_BASE_COST;
+            if (serverRackOwned === 0) serverRackCurrentCost = SERVER_RACK_BASE_COST;
+            if (fusionReactorOwned === 0) fusionReactorCurrentCost = FUSION_REACTOR_BASE_COST;
+            if (foundationCoolingOwned === 0) foundationCoolingCurrentCost = FOUNDATION_COOLING_BASE_COST;
+            if (serverBanksOwned === 0) serverBanksCurrentCost = SERVER_BANKS_BASE_COST;
+            if (networkUplinkOwned === 0) networkUplinkCurrentCost = NETWORK_UPLINK_BASE_COST;
+            if (aiCoreOwned === 0) aiCoreCurrentCost = AI_CORE_BASE_COST;
+
+            calculateAllEps(); // Recalculate EPS based on loaded state
+            updateDisplays();   // Update UI based on loaded state
+            // No separate log message for "game loaded" here as the specific state messages below are more informative.
+
         } catch (e) {
             console.error("Error loading game state:", e);
-            // If parsing fails, start a fresh game or use defaults
+            resetGameToDefaults();
+            calculateAllEps();
+            updateDisplays();
+            addLogMessage("Error loading save. Game reset to default state.", "error");
+        }
+    } else {
+        // No save found, start fresh
+        resetGameToDefaults(); // Apply default values
+        calculateAllEps();     // Calculate initial EPS (should be 0)
+        updateDisplays();      // Update displays for a fresh game
+        addLogMessage("System rebooted. Gateway construction protocol active.", "system-event");
+        if (clickUpgradeLevel === 0 && rpiOwned === 0 && energy < 10) { // Heuristic for a truly fresh start
+            addLogMessage("Hint: Generate some ⚡️ Energy with the main button, then check ✨ Manual Upgrades or 🤖 Auto Generators.", "info");
         }
     }
-    calculateAllEps(); // Recalculate EPS after loading
-    updateDisplays();   // Update UI after loading
-    addLogMessage("System rebooted. Gateway Generator interface online.", "info");
-    if (gameWon) {
-        addLogMessage("Datacenter Core status: COMPLETE. Standby mode.", "milestone");
+
+    // Initial status messages based on loaded/new game state (after potential win-reset or fresh start)
+    // These provide context to the player.
+    if (gameWon) { // This check is after potential reset from a won game.
+        // If gameWon was true from save, it's now false due to resetGameToDefaults(), 
+        // so this block won't run immediately after a win-reset, which is fine.
+        // This primarily handles loading a game that was already won and then reset manually by the user.
+        // However, the current logic resets gameWon to false in resetGameToDefaults,
+        // so this specific path might be less common unless gameWon isn't reset for some reason.
     } else if (aiCoreUnlocked) {
-        addLogMessage("AI Core construction protocols available.", "unlock");
+        addLogMessage("AI Gateway Core construction protocols available.", "milestone");
     } else if (networkUplinkUnlocked) {
-        addLogMessage("Network Uplink awaiting deployment.", "unlock");
+        addLogMessage("Datacenter: Network Uplink awaiting deployment.", "milestone");
     } else if (serverBanksUnlocked) {
-        addLogMessage("Server Bank installation authorized.", "unlock");
+        addLogMessage("Datacenter: Server Bank installation authorized.", "milestone");
     } else if (foundationCoolingUnlocked) {
-        addLogMessage("Datacenter Foundation schematics available.", "unlock");
+        addLogMessage("Datacenter: Foundation schematics available.", "milestone");
     } else if (fusionReactorUnlocked) {
-        addLogMessage("Fusion Reactor blueprints accessible.", "unlock");
+        addLogMessage("Miniature Fusion Reactor blueprints accessible.", "milestone");
     } else if (serverRackUnlocked) {
-        addLogMessage("Server Rack assembly instructions found.", "unlock");
+        addLogMessage("Small Server Rack assembly instructions found.", "milestone");
     } else if (miningRigUnlocked) {
-        addLogMessage("Mining Rig fabrication plans available.", "unlock");
+        addLogMessage("6-GPU Mining Rig fabrication plans available.", "milestone");
     } else if (desktopGpuUnlocked) {
-        addLogMessage("Desktop GPU schematics acquired.", "unlock");
+        addLogMessage("Desktop GPU schematics acquired.", "milestone");
+    } else if (rpiOwned > 0) {
+         addLogMessage("Initial R-Pi network online and generating.", "system-event");
+    } else if (clickUpgradeLevel > 0) {
+        addLogMessage("Manual click enhancers active.", "system-event");
     }
+    // The "System rebooted..." message for a fresh game is handled in the 'else' block above.
 }
 
 const energyDisplay = document.getElementById('energyDisplay');
@@ -336,29 +395,20 @@ const buyAiCoreButton = document.getElementById('buy-ai-core');
 
 // --- SYSTEM LOG FUNCTIONALITY ---
 function addLogMessage(message, type = 'info') {
-    if (!systemLogMessages) return; // Guard if element not found
+    const logEntry = document.createElement('div');
+    logEntry.classList.add('log-message', `log-${type}`);
+    logEntry.textContent = message;
 
-    const isScrolledToBottom = systemLogMessages.scrollHeight - systemLogMessages.clientHeight <= systemLogMessages.scrollTop + 1;
+    // Add the new message to the bottom
+    systemLogMessages.appendChild(logEntry);
 
-    const messageElement = document.createElement('div');
-    messageElement.textContent = message;
-    messageElement.classList.add('log-message');
-    if (type) {
-        messageElement.classList.add(type);
-    }
-
-    // Add new message to the bottom (due to flex-direction: column)
-    systemLogMessages.appendChild(messageElement);
-
-    // Remove old messages if log exceeds max length (removes from the top)
+    // Limit the number of log messages (remove from top)
     while (systemLogMessages.children.length > MAX_LOG_MESSAGES) {
         systemLogMessages.removeChild(systemLogMessages.firstChild);
     }
 
-    // Smart scroll to bottom
-    if (isScrolledToBottom) {
-        systemLogMessages.scrollTop = systemLogMessages.scrollHeight; 
-    }
+    // Always scroll to the bottom to show the latest message
+    systemLogMessages.scrollTop = systemLogMessages.scrollHeight;
 }
 
 // Apply dark mode by default
@@ -377,18 +427,28 @@ function calculateAllEps() {
 }
 
 function updateDisplays() {
-    energyDisplay.textContent = Math.floor(energy);
-    energyPerClickDisplay.textContent = energyPerClick;
-    totalEpsDisplay.textContent = totalEps;
+    energyDisplay.textContent = formatNumber(Math.floor(energy));
+    const epsClickBonus = Math.floor(totalEps * 0.01); // 1% of totalEps
+    energyPerClickDisplay.textContent = `${formatNumber(energyPerClick)} (+${formatNumber(epsClickBonus)})`;
+    totalEpsDisplay.textContent = formatNumber(totalEps);
 
-    clickUpgradeCostDisplay.textContent = clickUpgradeCost;
+    clickUpgradeCostDisplay.textContent = formatNumber(clickUpgradeCost);
     clickUpgradeLevelDisplay.textContent = clickUpgradeLevel;
     upgradeClickPowerButton.disabled = energy < clickUpgradeCost;
+    if (energy >= clickUpgradeCost) upgradeClickPowerButton.classList.add('affordable');
+    else upgradeClickPowerButton.classList.remove('affordable');
 
     rpiOwnedDisplay.textContent = rpiOwned;
-    rpiEpsDisplay.textContent = rpiTotalEps;
-    rpiCostDisplay.textContent = rpiCurrentCost;
+    rpiEpsDisplay.textContent = formatNumber(rpiTotalEps);
+    rpiCostDisplay.textContent = formatNumber(rpiCurrentCost);
     buyRpiButton.disabled = energy < rpiCurrentCost;
+    if (energy >= rpiCurrentCost) buyRpiButton.classList.add('affordable');
+    else buyRpiButton.classList.remove('affordable');
+
+    if (rpiOwned > 0 && rpiOwned % 10 === 0 && !shownMilestones[`rpi-${rpiOwned}`]) {
+        addLogMessage(`${rpiOwned} R-Pi nodes now form a distributed computing network. The nascent digital mind stirs.`, "milestone");
+        shownMilestones[`rpi-${rpiOwned}`] = true;
+    }
 
     // Desktop GPU - Unlock Logic Refined
     if (desktopGpuUnlocked) {
@@ -396,7 +456,7 @@ function updateDisplays() {
     } else if (energy >= 100 || rpiOwned >= 3) {
         desktopGpuUpgradeSection.style.display = "block";
         desktopGpuUpgradeSection.classList.add('newly-unlocked');
-        addLogMessage("Desktop GPU processing unlocked. Enhanced computation available.", "unlock");
+        addLogMessage("Desktop GPU processing unlocked. Enhanced computation available.", "milestone");
         setTimeout(() => {
             desktopGpuUpgradeSection.classList.remove('newly-unlocked');
         }, 2000);
@@ -407,9 +467,16 @@ function updateDisplays() {
     // Update Desktop GPU displays if section is visible
     if (desktopGpuUpgradeSection.style.display === "block") {
         desktopOwnedDisplay.textContent = desktopOwned;
-        desktopEpsDisplay.textContent = desktopTotalEps;
-        desktopCostDisplay.textContent = desktopCurrentCost;
+        desktopEpsDisplay.textContent = formatNumber(desktopTotalEps);
+        desktopCostDisplay.textContent = formatNumber(desktopCurrentCost);
         buyDesktopButton.disabled = energy < desktopCurrentCost;
+        if (energy >= desktopCurrentCost) buyDesktopButton.classList.add('affordable');
+        else buyDesktopButton.classList.remove('affordable');
+
+        if (desktopOwned > 0 && desktopOwned % 5 === 0 && !shownMilestones[`desktop-${desktopOwned}`]) {
+            addLogMessage(`With ${desktopOwned} Desktop GPUs, the array's computational throughput is formidable. Data patterns begin to resolve into meaning.`, "milestone");
+            shownMilestones[`desktop-${desktopOwned}`] = true;
+        }
     }
 
     // Mining Rig - Unlock Logic Refined
@@ -418,7 +485,7 @@ function updateDisplays() {
     } else if (energy >= 800 || desktopOwned >= 3) {
         miningRigUpgradeSection.style.display = "block";
         miningRigUpgradeSection.classList.add('newly-unlocked');
-        addLogMessage("Mining Rig fabrication plans discovered. Increased output potential.", "unlock");
+        addLogMessage("Mining Rig fabrication plans discovered. Increased output potential.", "milestone");
         setTimeout(() => {
             miningRigUpgradeSection.classList.remove('newly-unlocked');
         }, 2000);
@@ -429,9 +496,16 @@ function updateDisplays() {
     // Update Mining Rig displays if section is visible
     if (miningRigUpgradeSection.style.display === "block") {
         rigOwnedDisplay.textContent = rigOwned;
-        rigEpsDisplay.textContent = rigTotalEps;
-        rigCostDisplay.textContent = rigCurrentCost;
+        rigEpsDisplay.textContent = formatNumber(rigTotalEps);
+        rigCostDisplay.textContent = formatNumber(rigCurrentCost);
         buyRigButton.disabled = energy < rigCurrentCost;
+        if (energy >= rigCurrentCost) buyRigButton.classList.add('affordable');
+        else buyRigButton.classList.remove('affordable');
+
+        if (rigOwned > 0 && rigOwned % 3 === 0 && !shownMilestones[`rig-${rigOwned}`]) {
+            addLogMessage(`${rigOwned} Mining Rigs now channel a torrent of raw energy. The foundations for something greater are being forged in silicon and electricity.`, "milestone");
+            shownMilestones[`rig-${rigOwned}`] = true;
+        }
     }
 
     // Small Server Rack - Unlock Logic
@@ -440,7 +514,7 @@ function updateDisplays() {
     } else if (energy >= 7000 || rigOwned >= 3) {
         serverRackUpgradeSection.style.display = "block";
         serverRackUpgradeSection.classList.add('newly-unlocked');
-        addLogMessage("Small Server Rack assembly unlocked. Network capacity growing.", "unlock");
+        addLogMessage("Small Server Rack assembly unlocked. Network capacity growing.", "milestone");
         setTimeout(() => {
             serverRackUpgradeSection.classList.remove('newly-unlocked');
         }, 2000);
@@ -451,9 +525,11 @@ function updateDisplays() {
     // Update Small Server Rack displays if section is visible
     if (serverRackUpgradeSection.style.display === "block") {
         serverRackOwnedDisplay.textContent = serverRackOwned;
-        serverRackEpsDisplay.textContent = serverRackTotalEps;
-        serverRackCostDisplay.textContent = serverRackCurrentCost;
+        serverRackEpsDisplay.textContent = formatNumber(serverRackTotalEps);
+        serverRackCostDisplay.textContent = formatNumber(serverRackCurrentCost);
         buyServerRackButton.disabled = energy < serverRackCurrentCost;
+        if (energy >= serverRackCurrentCost) buyServerRackButton.classList.add('affordable');
+        else buyServerRackButton.classList.remove('affordable');
     }
 
     // Miniature Fusion Reactor - Unlock Logic
@@ -462,7 +538,7 @@ function updateDisplays() {
     } else if (energy >= 60000 || serverRackOwned >= 2) {
         fusionReactorUpgradeSection.style.display = "block";
         fusionReactorUpgradeSection.classList.add('newly-unlocked');
-        addLogMessage("Miniature Fusion Reactor unlocked. Significant power increase detected.", "unlock");
+        addLogMessage("Miniature Fusion Reactor unlocked. Significant power increase detected.", "milestone");
         setTimeout(() => {
             fusionReactorUpgradeSection.classList.remove('newly-unlocked');
         }, 2000);
@@ -473,9 +549,11 @@ function updateDisplays() {
     // Update Miniature Fusion Reactor displays if section is visible
     if (fusionReactorUpgradeSection.style.display === "block") {
         fusionReactorOwnedDisplay.textContent = fusionReactorOwned;
-        fusionReactorEpsDisplay.textContent = fusionReactorTotalEps;
-        fusionReactorCostDisplay.textContent = fusionReactorCurrentCost;
+        fusionReactorEpsDisplay.textContent = formatNumber(fusionReactorTotalEps);
+        fusionReactorCostDisplay.textContent = formatNumber(fusionReactorCurrentCost);
         buyFusionReactorButton.disabled = energy < fusionReactorCurrentCost;
+        if (energy >= fusionReactorCurrentCost) buyFusionReactorButton.classList.add('affordable');
+        else buyFusionReactorButton.classList.remove('affordable');
     }
 
     // Foundation & Cooling Systems - Unlock Logic
@@ -489,7 +567,8 @@ function updateDisplays() {
         if (foundationCoolingUnlocked) { // Is fully unlocked
             foundationCoolingUpgradeSection.classList.remove('locked-upgrade');
             buyFoundationCoolingButton.disabled = energy < foundationCoolingCurrentCost;
-            // newly-unlocked animation is handled below if it just became unlocked
+            if (energy >= foundationCoolingCurrentCost) buyFoundationCoolingButton.classList.add('affordable');
+            else buyFoundationCoolingButton.classList.remove('affordable');
         } else { // Not fully unlocked yet, show as locked
             foundationCoolingUpgradeSection.classList.add('locked-upgrade');
             buyFoundationCoolingButton.disabled = true; // Button within locked-upgrade is also styled by CSS
@@ -506,6 +585,8 @@ function updateDisplays() {
             }, 2000);
             // Update button state again in case it just unlocked
             buyFoundationCoolingButton.disabled = energy < foundationCoolingCurrentCost;
+            if (energy >= foundationCoolingCurrentCost) buyFoundationCoolingButton.classList.add('affordable');
+            else buyFoundationCoolingButton.classList.remove('affordable');
         }
     } else {
         foundationCoolingUpgradeSection.style.display = "none"; // Hide if fusion reactor not even unlocked
@@ -513,11 +594,11 @@ function updateDisplays() {
     // Update text content regardless of lock state if visible
     if (foundationCoolingUpgradeSection.style.display === "block") {
         foundationCoolingOwnedDisplay.textContent = foundationCoolingOwned;
-        foundationCoolingEpsDisplay.textContent = foundationCoolingTotalEps;
-        foundationCoolingCostDisplay.textContent = foundationCoolingCurrentCost;
+        foundationCoolingEpsDisplay.textContent = formatNumber(foundationCoolingTotalEps);
+        foundationCoolingCostDisplay.textContent = formatNumber(foundationCoolingCurrentCost);
         // Button text for purchased state is handled above
         if (foundationCoolingOwned === 0) {
-             buyFoundationCoolingButton.textContent = `Buy: ${foundationCoolingCurrentCost} ⚡️`;
+             buyFoundationCoolingButton.textContent = `Buy: ${formatNumber(foundationCoolingCurrentCost)} ⚡️`;
         }
     }
 
@@ -532,6 +613,8 @@ function updateDisplays() {
         if (serverBanksUnlocked) {
             serverBanksUpgradeSection.classList.remove('locked-upgrade');
             buyServerBanksButton.disabled = energy < serverBanksCurrentCost;
+            if (energy >= serverBanksCurrentCost) buyServerBanksButton.classList.add('affordable');
+            else buyServerBanksButton.classList.remove('affordable');
         } else {
             serverBanksUpgradeSection.classList.add('locked-upgrade');
             buyServerBanksButton.disabled = true;
@@ -546,16 +629,18 @@ function updateDisplays() {
                 serverBanksUpgradeSection.classList.remove('newly-unlocked');
             }, 2000);
             buyServerBanksButton.disabled = energy < serverBanksCurrentCost;
+            if (energy >= serverBanksCurrentCost) buyServerBanksButton.classList.add('affordable');
+            else buyServerBanksButton.classList.remove('affordable');
         }
     } else {
         serverBanksUpgradeSection.style.display = "none";
     }
     if (serverBanksUpgradeSection.style.display === "block") {
         serverBanksOwnedDisplay.textContent = serverBanksOwned;
-        serverBanksEpsDisplay.textContent = serverBanksTotalEps;
-        serverBanksCostDisplay.textContent = serverBanksCurrentCost;
+        serverBanksEpsDisplay.textContent = formatNumber(serverBanksTotalEps);
+        serverBanksCostDisplay.textContent = formatNumber(serverBanksCurrentCost);
         if (serverBanksOwned === 0) {
-            buyServerBanksButton.textContent = `Buy: ${serverBanksCurrentCost} ⚡️`;
+            buyServerBanksButton.textContent = `Buy: ${formatNumber(serverBanksCurrentCost)} ⚡️`;
         }
     }
 
@@ -570,8 +655,10 @@ function updateDisplays() {
         if (networkUplinkUnlocked) {
             networkUplinkUpgradeSection.classList.remove('locked-upgrade');
             buyNetworkUplinkButton.disabled = energy < networkUplinkCurrentCost || gameWon;
+            if (energy >= networkUplinkCurrentCost && !gameWon) buyNetworkUplinkButton.classList.add('affordable');
+            else buyNetworkUplinkButton.classList.remove('affordable');
         } else {
-            networkUplinkUpgradeSection.classList.add('locked-upgrade');
+            networkUplinkUpgradeSection.style.display = "block";
             buyNetworkUplinkButton.disabled = true;
         }
 
@@ -584,16 +671,18 @@ function updateDisplays() {
                 networkUplinkUpgradeSection.classList.remove('newly-unlocked');
             }, 2000);
             buyNetworkUplinkButton.disabled = energy < networkUplinkCurrentCost || gameWon;
+            if (energy >= networkUplinkCurrentCost && !gameWon) buyNetworkUplinkButton.classList.add('affordable');
+            else buyNetworkUplinkButton.classList.remove('affordable');
         }
     } else {
         networkUplinkUpgradeSection.style.display = "none";
     }
     if (networkUplinkUpgradeSection.style.display === "block") {
         networkUplinkOwnedDisplay.textContent = networkUplinkOwned;
-        networkUplinkEpsDisplay.textContent = networkUplinkTotalEps;
-        networkUplinkCostDisplay.textContent = networkUplinkCurrentCost;
+        networkUplinkEpsDisplay.textContent = formatNumber(networkUplinkTotalEps);
+        networkUplinkCostDisplay.textContent = formatNumber(networkUplinkCurrentCost);
         if (networkUplinkOwned === 0) {
-             buyNetworkUplinkButton.textContent = `Buy: ${networkUplinkCurrentCost} ⚡️`;
+             buyNetworkUplinkButton.textContent = `Buy: ${formatNumber(networkUplinkCurrentCost)} ⚡️`;
         }
     }
 
@@ -608,6 +697,8 @@ function updateDisplays() {
         if (aiCoreUnlocked) {
             aiCoreUpgradeSection.classList.remove('locked-upgrade');
             buyAiCoreButton.disabled = energy < aiCoreCurrentCost || gameWon;
+            if (energy >= aiCoreCurrentCost && !gameWon) buyAiCoreButton.classList.add('affordable');
+            else buyAiCoreButton.classList.remove('affordable');
         } else {
             aiCoreUpgradeSection.classList.add('locked-upgrade');
             buyAiCoreButton.disabled = true;
@@ -622,15 +713,17 @@ function updateDisplays() {
                 aiCoreUpgradeSection.classList.remove('newly-unlocked');
             }, 2000);
             buyAiCoreButton.disabled = energy < aiCoreCurrentCost || gameWon;
+            if (energy >= aiCoreCurrentCost && !gameWon) buyAiCoreButton.classList.add('affordable');
+            else buyAiCoreButton.classList.remove('affordable');
         }
     } else {
         aiCoreUpgradeSection.style.display = "none";
     }
     if (aiCoreUpgradeSection.style.display === "block") {
         aiCoreOwnedDisplay.textContent = aiCoreOwned;
-        aiCoreCostDisplay.textContent = aiCoreCurrentCost;
+        aiCoreCostDisplay.textContent = formatNumber(aiCoreCurrentCost);
         if (aiCoreOwned === 0) {
-             buyAiCoreButton.textContent = `Build: ${aiCoreCurrentCost} ⚡️`;
+             buyAiCoreButton.textContent = `Build: ${formatNumber(aiCoreCurrentCost)} ⚡️`;
         }
     }
 
@@ -647,33 +740,34 @@ function updateDisplays() {
         buyNetworkUplinkButton.disabled = true;
         buyAiCoreButton.disabled = true;
         clickButton.disabled = true;
+
+        // Remove affordable class from all buttons if game is won
+        [upgradeClickPowerButton, buyRpiButton, buyDesktopButton, buyRigButton, buyServerRackButton, buyFusionReactorButton, buyFoundationCoolingButton, buyServerBanksButton, buyNetworkUplinkButton, buyAiCoreButton].forEach(button => {
+            button.classList.remove('affordable');
+        });
     }
 }
 
 clickButton.addEventListener('click', () => {
-    energy += energyPerClick;
+    const epsClickBonus = Math.floor(totalEps * 0.01); // 1% of totalEps
+    energy += (energyPerClick + epsClickBonus);
     updateDisplays();
-
-    // Add click animation
-    clickButton.classList.add('clicked');
-    setTimeout(() => {
-        clickButton.classList.remove('clicked');
-    }, 100); // Duration of the transform transition
+    // No save on click for performance, autosave will handle it.
 });
 
 upgradeClickPowerButton.addEventListener('click', () => {
     if (energy >= clickUpgradeCost) {
         energy -= clickUpgradeCost;
         clickUpgradeLevel++;
-        energyPerClick++;
-        clickUpgradeCost = Math.floor(5 * Math.pow(1.4, clickUpgradeLevel));
+        energyPerClick++; // Simple +1 EPC per level for now
+        clickUpgradeCost = Math.ceil(5 * Math.pow(1.4, clickUpgradeLevel)); 
         if (clickUpgradeLevel === 1) {
-            addLogMessage("Manual click input amplified. Efficiency increased.", "info");
-        } else if (clickUpgradeLevel % 5 === 0) {
-             addLogMessage(`Click power reached level ${clickUpgradeLevel}! Neural interface synchronizing...`, "info");
+            addLogMessage(`Manual click interface enhanced! Each click now yields more ⚡️ Energy. EPC: ${energyPerClick}. Next: ${formatNumber(clickUpgradeCost)} ⚡️`, "purchase");
+        } else {
+            addLogMessage(`Click Power upgraded to Level ${clickUpgradeLevel}. EPC: ${energyPerClick}. Cost for next: ${formatNumber(clickUpgradeCost)} ⚡️`, "purchase");
         }
         updateDisplays();
-        saveGameState();
+        saveGameState(); 
     }
 });
 
@@ -681,15 +775,16 @@ buyRpiButton.addEventListener('click', () => {
     if (energy >= rpiCurrentCost) {
         energy -= rpiCurrentCost;
         rpiOwned++;
+        rpiCurrentCost = Math.ceil(RPI_BASE_COST * Math.pow(1.15, rpiOwned)); // Update cost before logging it
         if (rpiOwned === 1) {
-            addLogMessage("First Raspberry Pi online. Automated energy generation initiated.", "unlock");
-        } else if (rpiOwned % 10 === 0) {
-            addLogMessage(`${rpiOwned} R-Pi units now active. The cluster hums quietly.`, "info");
+            addLogMessage(`First Raspberry Pi acquired! It begins humming, generating a small but steady stream of ⚡️ Energy. R-Pi EPS: ${formatNumber(RPI_BASE_EPS)}. Next R-Pi: ${formatNumber(rpiCurrentCost)} ⚡️`, "milestone");
+        } else if (rpiOwned % 10 !== 0) { 
+             addLogMessage(`Acquired Raspberry Pi #${rpiOwned}. R-Pi EPS: ${formatNumber(rpiTotalEps)}. Next: ${formatNumber(rpiCurrentCost)} ⚡️`, "purchase");
         }
-        rpiCurrentCost = Math.floor(RPI_BASE_COST * Math.pow(1.15, rpiOwned));
+        // The log for 10th, 20th etc. R-Pi is handled in updateDisplays/checkUnlocks implicitly by not logging here.
         calculateAllEps();
         updateDisplays();
-        saveGameState();
+        saveGameState(); 
     }
 });
 
@@ -697,10 +792,12 @@ buyDesktopButton.addEventListener('click', () => {
     if (energy >= desktopCurrentCost) {
         energy -= desktopCurrentCost;
         desktopOwned++;
-        if (desktopOwned === 1) {
-            addLogMessage("First Desktop GPU unit integrated. Parallel processing enhanced.", "info");
+        desktopCurrentCost = Math.ceil(DESKTOP_BASE_COST * Math.pow(1.18, desktopOwned));
+        if (desktopOwned % 5 === 0) { // Log every 5th purchase for variety
+            addLogMessage(`Desktop GPU array expanded. Unit #${desktopOwned} online. Desktop EPS: ${formatNumber(desktopTotalEps)}. Next: ${formatNumber(desktopCurrentCost)} ⚡️`, "purchase");
+        } else {
+            addLogMessage(`Acquired Desktop GPU #${desktopOwned}. Desktop EPS: ${formatNumber(desktopTotalEps)}. Next: ${formatNumber(desktopCurrentCost)} ⚡️`, "purchase");
         }
-        desktopCurrentCost = Math.floor(DESKTOP_BASE_COST * Math.pow(1.18, desktopOwned));
         calculateAllEps();
         updateDisplays();
         saveGameState();
@@ -711,10 +808,12 @@ buyRigButton.addEventListener('click', () => {
     if (energy >= rigCurrentCost) {
         energy -= rigCurrentCost;
         rigOwned++;
-        if (rigOwned === 1) {
-            addLogMessage("First Mining Rig constructed. Energy output significantly boosted.", "info");
+        rigCurrentCost = Math.ceil(RIG_BASE_COST * Math.pow(1.22, rigOwned));
+        if (rigOwned % 3 === 0) { // Log every 3rd purchase
+            addLogMessage(`Mining Rig cluster augmented. Unit #${rigOwned} active. Rig EPS: ${formatNumber(rigTotalEps)}. Next: ${formatNumber(rigCurrentCost)} ⚡️`, "purchase");
+        } else {
+            addLogMessage(`Acquired Mining Rig #${rigOwned}. Rig EPS: ${formatNumber(rigTotalEps)}. Next: ${formatNumber(rigCurrentCost)} ⚡️`, "purchase");
         }
-        rigCurrentCost = Math.floor(RIG_BASE_COST * Math.pow(1.22, rigOwned));
         calculateAllEps();
         updateDisplays();
         saveGameState();
@@ -725,10 +824,8 @@ buyServerRackButton.addEventListener('click', () => {
     if (energy >= serverRackCurrentCost) {
         energy -= serverRackCurrentCost;
         serverRackOwned++;
-        if (serverRackOwned === 1) {
-            addLogMessage("First Server Rack installed. Datastream capacity nominal.", "info");
-        }
-        serverRackCurrentCost = Math.floor(SERVER_RACK_BASE_COST * Math.pow(1.28, serverRackOwned));
+        serverRackCurrentCost = Math.ceil(SERVER_RACK_BASE_COST * Math.pow(1.28, serverRackOwned));
+        addLogMessage(`Acquired Server Rack #${serverRackOwned}. Rack EPS: ${formatNumber(serverRackTotalEps)}. Next: ${formatNumber(serverRackCurrentCost)} ⚡️`, "purchase");
         calculateAllEps();
         updateDisplays();
         saveGameState();
@@ -739,11 +836,8 @@ buyFusionReactorButton.addEventListener('click', () => {
     if (energy >= fusionReactorCurrentCost) {
         energy -= fusionReactorCurrentCost;
         fusionReactorOwned++;
-        if (fusionReactorOwned === 1) {
-            addLogMessage("Miniature Fusion Reactor activated. Power levels surging.", "milestone");
-            addLogMessage("High energy output detected. Preliminary schematics for 'Project Gateway' accessible. Advanced datacenter research viable...", "lore");
-        }
-        fusionReactorCurrentCost = Math.floor(FUSION_REACTOR_BASE_COST * Math.pow(1.30, fusionReactorOwned));
+        fusionReactorCurrentCost = Math.ceil(FUSION_REACTOR_BASE_COST * Math.pow(1.30, fusionReactorOwned));
+        addLogMessage(`Acquired Fusion Reactor #${fusionReactorOwned}. Reactor EPS: ${formatNumber(fusionReactorTotalEps)}. Next: ${formatNumber(fusionReactorCurrentCost)} ⚡️`, "purchase");
         calculateAllEps();
         updateDisplays();
         saveGameState();
@@ -752,69 +846,80 @@ buyFusionReactorButton.addEventListener('click', () => {
 
 // Buy Foundation & Cooling Systems Event Listener
 buyFoundationCoolingButton.addEventListener('click', () => {
-    if (energy >= foundationCoolingCurrentCost && foundationCoolingOwned === 0) { // Ensure it can only be bought once
+    if (energy >= foundationCoolingCurrentCost && foundationCoolingOwned === 0) {
         energy -= foundationCoolingCurrentCost;
-        foundationCoolingOwned++;
-        addLogMessage("Datacenter Component: Foundation & Cooling - INSTALLED. Core temperature stabilized. Main server bank integration now feasible.", "milestone");
+        foundationCoolingOwned = 1;
+        foundationCoolingCurrentCost = Infinity;
+        addLogMessage(`Datacenter Foundation & Cooling online. EPS +${FOUNDATION_COOLING_BASE_EPS}. System integrity nominal.`, "milestone");
         calculateAllEps();
         updateDisplays();
         saveGameState();
-        // Since it's a unique component, disable the button after purchase
-        buyFoundationCoolingButton.disabled = true; 
-        buyFoundationCoolingButton.textContent = "Purchased";
     }
 });
 
 // Buy Tier 1 Server Banks Event Listener
 buyServerBanksButton.addEventListener('click', () => {
-    if (energy >= serverBanksCurrentCost && serverBanksOwned === 0) { // Ensure it can only be bought once
+    if (energy >= serverBanksCurrentCost && serverBanksOwned === 0) {
         energy -= serverBanksCurrentCost;
-        serverBanksOwned++;
-        addLogMessage("Datacenter Component: Tier 1 Server Banks - ONLINE. Computational capacity nominal. Next phase: establishing wide-band network uplink.", "milestone");
+        serverBanksOwned = 1;
+        serverBanksCurrentCost = Infinity;
+        addLogMessage(`Tier 1 Server Banks integrated. EPS +${SERVER_BANKS_BASE_EPS}. Network capacity increased.`, "milestone");
         calculateAllEps();
         updateDisplays();
         saveGameState();
-        buyServerBanksButton.disabled = true;
-        buyServerBanksButton.textContent = "Purchased";
     }
 });
 
 // Buy Network Uplink Infrastructure Event Listener
 buyNetworkUplinkButton.addEventListener('click', () => {
-    if (energy >= networkUplinkCurrentCost && networkUplinkOwned === 0) { // Ensure it can only be bought once
+    if (energy >= networkUplinkCurrentCost && networkUplinkOwned === 0) {
         energy -= networkUplinkCurrentCost;
-        networkUplinkOwned++;
-        addLogMessage("Datacenter Component: Network Uplink Infrastructure - ESTABLISHED. Global data conduit active. Final objective: AI Gateway Core deployment.", "milestone");
+        networkUplinkOwned = 1;
+        networkUplinkCurrentCost = Infinity;
+        addLogMessage(`Network Uplink established. EPS +${NETWORK_UPLINK_BASE_EPS}. Global connection achieved.`, "milestone");
         calculateAllEps();
         updateDisplays();
         saveGameState();
-        buyNetworkUplinkButton.disabled = true;
-        buyNetworkUplinkButton.textContent = "Purchased";
     }
 });
 
 // Buy AI-Powered Gateway Core Event Listener
 buyAiCoreButton.addEventListener('click', () => {
-    if (energy >= aiCoreCurrentCost && !gameWon) {
+    if (energy >= aiCoreCurrentCost && aiCoreOwned === 0) {
         energy -= aiCoreCurrentCost;
-        aiCoreOwned++;
-        // No EPS boost, triggers win condition
-        calculateAllEps(); // Recalculate just in case, though AI core adds no EPS
+        aiCoreOwned = 1;
+        aiCoreCurrentCost = Infinity; // Can't buy more
+        // Log message for purchase itself is handled by triggerWinCondition
+        triggerWinCondition(); // This will also handle relevant log messages
+        calculateAllEps(); // Recalculate EPS (though game is won)
         updateDisplays();
-        triggerWinCondition(); // Call the win condition function
-        saveGameState(); // Save the win state
+        saveGameState(); // Save the won state
     }
 });
 
+// --- WIN CONDITION ---
 function triggerWinCondition() {
-    gameWon = true;
-    updateDisplays(); // Update displays to disable buttons and show win state
-    addLogMessage("AI GATEWAY CORE ACTIVATED. ALL SYSTEMS PEAK. THE GATEWAY IS OPEN.", "lore");
-    addLogMessage("Energy generation nominal. Purpose fulfilled... or has it just begun?", "lore");
-    // Display win message
-    setTimeout(() => { // Timeout to allow UI to update first
-        alert("The Gateway is Online.\n\nThe AI Core resonates with cosmic energy, the Datacenter a triumph of will and intellect. You have unlocked a connection to something vast, something unknown. The universe holds its breath.\n\nWhat will you do with this power?\n\nGateway Generator complete. The journey has just begun...\n\n(You can refresh to start over.)");
-    }, 100); 
+    if (!gameWon) {
+        gameWon = true;
+        // Log messages are good, but primary win feedback is now the end-game screen
+        addLogMessage("AI Gateway Core construction complete! 접속되었습니다!", "milestone");
+        addLogMessage("The Conduit is open. Energy flow nominal. Ultimate generation achieved.", "milestone");
+        // addLogMessage("SYSTEM: Gateway Protocol fulfilled. Resetting for next cycle evaluation...", "system-event");
+
+        // Populate and show end-game screen
+        finalEpsStat.textContent = formatNumber(totalEps);
+        finalClickLevelStat.textContent = clickUpgradeLevel;
+        finalRpiStat.textContent = rpiOwned;
+        finalDesktopStat.textContent = desktopOwned;
+        finalRigStat.textContent = rigOwned;
+        finalServerRackStat.textContent = serverRackOwned;
+        finalFusionReactorStat.textContent = fusionReactorOwned;
+        
+        endGameScreen.style.display = "flex"; // Show the screen (uses flex for centering)
+
+        // Disable game interactions in background (already handled by updateDisplays when gameWon = true)
+        updateDisplays(); // Ensure UI reflects won state immediately
+    }
 }
 
 // Manual Reset Game Event Listener
@@ -827,6 +932,19 @@ if (resetGameButton) {
             updateDisplays();
             addLogMessage("Game progress has been manually reset.", "info");
         }
+    });
+}
+
+// Event Listeners (continued)
+if (playAgainButton) {
+    playAgainButton.addEventListener('click', () => {
+        endGameScreen.style.display = "none"; // Hide the end-game screen
+        localStorage.removeItem(GAME_SAVE_KEY); // Clear the old save
+        resetGameToDefaults(); // Reset all game variables
+        // calculateAllEps(); // resetGameToDefaults clears shownMilestones, calculateAllEps will be called by loadGameState or initial setup
+        // updateDisplays();  // Similarly, updateDisplays will be handled by the fresh load sequence
+        loadGameState(); // This will set up a fresh game state and initial log messages
+        addLogMessage("New cycle initiated by the Architect. The Gateway awaits...", "system-event");
     });
 }
 
@@ -844,3 +962,100 @@ updateDisplays(); // Then update all displays
 setInterval(gameLoop, 100); // Run game loop 10 times per second
 setInterval(saveGameState, 30000); // Autosave every 30 seconds
 window.addEventListener('beforeunload', saveGameState); // Save before leaving 
+
+// --- CLICK UPGRADE ---
+function upgradeClickPower() {
+    if (energy >= clickUpgradeCost) {
+        energy -= clickUpgradeCost;
+        energyPerClick += 1; // Or some other scaling factor
+        clickUpgradeLevel++;
+        clickUpgradeCost = Math.ceil(clickUpgradeCost * 1.4); // Increase cost
+        updateDisplays();
+        addLogMessage(`Click Power upgraded to Level ${clickUpgradeLevel}. EPC: ${energyPerClick}. Cost for next: ${clickUpgradeCost} ⚡️`, "purchase");
+    }
+}
+
+// --- RASPBERRY PI ---
+function buyRpi() {
+    if (energy >= rpiCurrentCost) {
+        energy -= rpiCurrentCost;
+        rpiOwned++;
+        rpiCurrentCost = Math.ceil(RPI_BASE_COST * Math.pow(1.15, rpiOwned));
+        // Add log for first RPI purchase in checkUnlocks to avoid duplicate message on load + first buy
+        if (rpiOwned > 1 && rpiOwned % 10 !== 0) { // Avoid logging for the 10th, 20th etc. which have special messages
+             addLogMessage(`Acquired Raspberry Pi #${rpiOwned}. R-Pi EPS: ${rpiTotalEps}. Next: ${rpiCurrentCost} ⚡️`, "purchase");
+        }
+        calculateAllEps();
+        updateDisplays();
+    }
+}
+
+// --- DESKTOP GPU ---
+function buyDesktop() {
+    if (energy >= desktopCurrentCost) {
+        energy -= desktopCurrentCost;
+        desktopOwned++;
+        desktopCurrentCost = Math.ceil(DESKTOP_BASE_COST * Math.pow(1.18, desktopOwned));
+        if (desktopOwned % 5 === 0) { // Log every 5th purchase for variety
+            addLogMessage(`Desktop GPU array expanded. Unit #${desktopOwned} online. Desktop EPS: ${desktopTotalEps}. Next: ${desktopCurrentCost} ⚡️`, "purchase");
+        } else {
+            addLogMessage(`Acquired Desktop GPU #${desktopOwned}. Desktop EPS: ${desktopTotalEps}. Next: ${desktopCurrentCost} ⚡️`, "purchase");
+        }
+        calculateAllEps();
+        updateDisplays();
+    }
+}
+
+// --- MINING RIG ---
+function buyRig() {
+    if (energy >= rigCurrentCost) {
+        energy -= rigCurrentCost;
+        rigOwned++;
+        rigCurrentCost = Math.ceil(RIG_BASE_COST * Math.pow(1.22, rigOwned));
+        if (rigOwned % 3 === 0) { // Log every 3rd purchase
+            addLogMessage(`Mining Rig cluster augmented. Unit #${rigOwned} active. Rig EPS: ${rigTotalEps}. Next: ${rigCurrentCost} ⚡️`, "purchase");
+        } else {
+            addLogMessage(`Acquired Mining Rig #${rigOwned}. Rig EPS: ${rigTotalEps}. Next: ${rigCurrentCost} ⚡️`, "purchase");
+        }
+        calculateAllEps();
+        updateDisplays();
+    }
+}
+
+// --- SMALL SERVER RACK ---
+function buyServerRack() {
+    if (energy >= serverRackCurrentCost) {
+        energy -= serverRackCurrentCost;
+        serverRackOwned++;
+        serverRackCurrentCost = Math.ceil(SERVER_RACK_BASE_COST * Math.pow(1.28, serverRackOwned));
+        addLogMessage(`Acquired Server Rack #${serverRackOwned}. Rack EPS: ${serverRackTotalEps}. Next: ${formatNumber(serverRackCurrentCost)} ⚡️`, "purchase");
+        calculateAllEps();
+        updateDisplays();
+    }
+}
+
+// --- MINIATURE FUSION REACTOR ---
+function buyFusionReactor() {
+    if (energy >= fusionReactorCurrentCost) {
+        energy -= fusionReactorCurrentCost;
+        fusionReactorOwned++;
+        fusionReactorCurrentCost = Math.ceil(FUSION_REACTOR_BASE_COST * Math.pow(1.30, fusionReactorOwned));
+        addLogMessage(`Acquired Fusion Reactor #${fusionReactorOwned}. Reactor EPS: ${fusionReactorTotalEps}. Next: ${formatNumber(fusionReactorCurrentCost)} ⚡️`, "purchase");
+        calculateAllEps();
+        updateDisplays();
+    }
+}
+
+// --- NUMBER FORMATTING UTILITY ---
+function formatNumber(num) {
+    if (num === Infinity) return "Infinity";
+    if (num < 1000) return num.toString();
+    const suffixes = ["", "K", "M", "B", "T", "Qa", "Qi", "Sx", "Sp", "Oc", "No", "Dc"]; // Added more suffixes
+    const i = Math.floor(Math.log10(Math.abs(num)) / 3);
+    let val = (num / Math.pow(1000, i));
+    // Use toFixed(2) for two decimal places if not a whole number, otherwise show as integer or one decimal
+    if (val >= 100) val = Math.floor(val);
+    else if (val >= 10) val = parseFloat(val.toFixed(1));
+    else val = parseFloat(val.toFixed(2));
+    return val + suffixes[i];
+} 
