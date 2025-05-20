@@ -83,6 +83,9 @@ const GAME_SAVE_KEY = 'gatewayGeneratorSave';
 const systemLogMessages = document.getElementById('system-log-messages');
 const MAX_LOG_MESSAGES = 20; // Keep the log from getting too long
 
+// Reset Game Button Element
+const resetGameButton = document.getElementById('reset-game-button');
+
 function resetGameToDefaults() {
     energy = 0;
     energyPerClick = 2;
@@ -344,15 +347,15 @@ function addLogMessage(message, type = 'info') {
         messageElement.classList.add(type);
     }
 
-    // Add new message to the top (because of flex-direction: column-reverse)
+    // Add new message to the bottom (due to flex-direction: column)
     systemLogMessages.appendChild(messageElement);
 
-    // Remove old messages if log exceeds max length
+    // Remove old messages if log exceeds max length (removes from the top)
     while (systemLogMessages.children.length > MAX_LOG_MESSAGES) {
-        systemLogMessages.removeChild(systemLogMessages.firstChild); // remove from the bottom (visually top)
+        systemLogMessages.removeChild(systemLogMessages.firstChild);
     }
 
-    // Smart scroll
+    // Smart scroll to bottom
     if (isScrolledToBottom) {
         systemLogMessages.scrollTop = systemLogMessages.scrollHeight; 
     }
@@ -812,6 +815,19 @@ function triggerWinCondition() {
     setTimeout(() => { // Timeout to allow UI to update first
         alert("The Gateway is Online.\n\nThe AI Core resonates with cosmic energy, the Datacenter a triumph of will and intellect. You have unlocked a connection to something vast, something unknown. The universe holds its breath.\n\nWhat will you do with this power?\n\nGateway Generator complete. The journey has just begun...\n\n(You can refresh to start over.)");
     }, 100); 
+}
+
+// Manual Reset Game Event Listener
+if (resetGameButton) {
+    resetGameButton.addEventListener('click', () => {
+        if (window.confirm("Are you sure you want to reset all your game progress? This cannot be undone.")) {
+            localStorage.removeItem(GAME_SAVE_KEY);
+            resetGameToDefaults();
+            calculateAllEps();
+            updateDisplays();
+            addLogMessage("Game progress has been manually reset.", "info");
+        }
+    });
 }
 
 // Main Game Loop

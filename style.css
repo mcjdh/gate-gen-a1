@@ -147,7 +147,7 @@ body.dark-mode #system-log-header {
     text-align: left;
     font-size: 0.85em;
     display: flex;
-    flex-direction: column-reverse; /* New messages appear at the bottom and scroll up */
+    flex-direction: column; /* Changed from column-reverse, new messages at bottom */
 }
 
 .log-message {
@@ -209,4 +209,25 @@ body:not(.dark-mode) .log-message.lore {
 
 body:not(.dark-mode) .locked-upgrade .flavor-text::before {
     color: #e0a800;
+}
+
+/* Reset Game Container Styling */
+#reset-container {
+    margin-top: 25px;
+    padding-top: 15px;
+    border-top: 1px dashed #555; /* Dark mode separator */
+}
+
+body:not(.dark-mode) #reset-container {
+    border-top: 1px dashed #ddd; /* Light mode separator */
+}
+
+#reset-game-button {
+    background-color: #dc3545; /* Red color for warning/action */
+    color: white;
+    font-size: 0.9em;
+}
+
+#reset-game-button:hover {
+    background-color: #c82333; /* Darker red on hover */
 } 
