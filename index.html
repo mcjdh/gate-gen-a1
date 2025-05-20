@@ -12,6 +12,14 @@
         <p>⚡️ Energy: <span id="energyDisplay">0</span></p>
         <p>🖱️ EPC: <span id="energyPerClickDisplay">1</span></p>
         <p>⚙️ EPS: <span id="totalEpsDisplay">0</span></p>
+
+        <div id="system-log-container">
+            <div id="system-log-header">SYSTEM LOG</div>
+            <div id="system-log-messages">
+                <!-- Log messages will appear here -->
+            </div>
+        </div>
+
         <button id="click-button">Generate ⚡️</button>
 
         <div id="upgrades-container">
@@ -21,46 +29,55 @@
             <h2>🤖 Auto Generators</h2>
             <div class="generator-upgrade">
                 <p>🍓 R-Pi x<span id="rpiOwnedDisplay">0</span> (+<span id="rpiEpsDisplay">0</span> EPS)</p>
+                <em class="flavor-text">The humble seed of a digital dawn.</em>
                 <button id="buy-rpi">Buy: <span id="rpiCostDisplay">100</span> ⚡️</button>
             </div>
             <div class="generator-upgrade" id="desktop-gpu-upgrade-section">
                 <p>🖥️ Desktop x<span id="desktopOwnedDisplay">0</span> (+<span id="desktopEpsDisplay">0</span> EPS)</p>
+                <em class="flavor-text">Parallel thoughts, expanding the network.</em>
                 <button id="buy-desktop">Buy: <span id="desktopCostDisplay">750</span> ⚡️</button>
             </div>
             <!-- New 6 GPU Mining Rig Upgrade -->
             <div class="generator-upgrade" id="mining-rig-upgrade-section">
                 <p>⛏️ Rig x<span id="rigOwnedDisplay">0</span> (+<span id="rigEpsDisplay">0</span> EPS)</p>
+                <em class="flavor-text">Raw power, harnessed for a singular purpose.</em>
                 <button id="buy-rig">Buy: <span id="rigCostDisplay">15000</span> ⚡️</button>
             </div>
             <!-- New Small Server Rack Upgrade -->
             <div class="generator-upgrade" id="server-rack-upgrade-section">
                 <p>💾 Server Rack x<span id="serverRackOwnedDisplay">0</span> (+<span id="serverRackEpsDisplay">0</span> EPS)</p>
+                <em class="flavor-text">A symphony of servers, data streams converge.</em>
                 <button id="buy-server-rack">Buy: <span id="serverRackCostDisplay">300000</span> ⚡️</button>
             </div>
             <!-- New Miniature Fusion Reactor Upgrade -->
             <div class="generator-upgrade" id="fusion-reactor-upgrade-section">
                 <p>☢️ Fusion Reactor x<span id="fusionReactorOwnedDisplay">0</span> (+<span id="fusionReactorEpsDisplay">0</span> EPS)</p>
+                <em class="flavor-text">Taming a star, preparing the way.</em>
                 <button id="buy-fusion-reactor">Buy: <span id="fusionReactorCostDisplay">37500000</span> ⚡️</button>
             </div>
 
             <h2>🏛️ Gateway Datacenter</h2>
             <div class="generator-upgrade" id="foundation-cooling-upgrade-section">
                 <p>🧊 Foundation & Cooling x<span id="foundationCoolingOwnedDisplay">0</span> (+<span id="foundationCoolingEpsDisplay">0</span> EPS)</p>
+                <em class="flavor-text">The bedrock laid, the core temperature stabilized.</em>
                 <button id="buy-foundation-cooling">Buy: <span id="foundationCoolingCostDisplay">1000000000</span> ⚡️</button>
             </div>
             <!-- New Tier 1 Server Banks Upgrade -->
             <div class="generator-upgrade" id="server-banks-upgrade-section">
                 <p>🏦 Tier 1 Server Banks x<span id="serverBanksOwnedDisplay">0</span> (+<span id="serverBanksEpsDisplay">0</span> EPS)</p>
+                <em class="flavor-text">Legions of logic, the first true nodes online.</em>
                 <button id="buy-server-banks">Buy: <span id="serverBanksCostDisplay">10000000000</span> ⚡️</button>
             </div>
             <!-- New Network Uplink Infrastructure Upgrade -->
             <div class="generator-upgrade" id="network-uplink-upgrade-section">
                 <p>🔗 Network Uplink x<span id="networkUplinkOwnedDisplay">0</span> (+<span id="networkUplinkEpsDisplay">0</span> EPS)</p>
+                <em class="flavor-text">The great bridge forms, reaching into the digital void.</em>
                 <button id="buy-network-uplink">Buy: <span id="networkUplinkCostDisplay">50000000000</span> ⚡️</button>
             </div>
             <!-- New AI-Powered Gateway Core Upgrade -->
             <div class="generator-upgrade" id="ai-core-upgrade-section">
                 <p>🧠 AI Gateway Core x<span id="aiCoreOwnedDisplay">0</span> (Completes Datacenter!)</p>
+                <em class="flavor-text">The mind is forged. The Conduit awaits.</em>
                 <button id="buy-ai-core">Build: <span id="aiCoreCostDisplay">250000000000</span> ⚡️</button>
             </div>
         </div>
