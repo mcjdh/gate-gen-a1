@@ -36,7 +36,7 @@ A clicker game where the player builds up an energy generation empire. Starting 
     - [x] Increases Energy Per Click (EPC).
     - [x] UI element to buy this upgrade, showing cost and current level.
     - [x] Logic to apply the upgrade bonus and scale its cost (e.g., `cost = baseCost * 1.5^level`).
-    - [x] Initial values: Base Cost 10 Energy, +1 EPC per level.
+    - [x] Initial values: Base Cost 10 Energy, +1 EPC per level. (Initial EPC is 2 by default now)
 - [ ] **Automatic Generators (Energy Per Second - EPS):**
     - [ ] **Tier 1: "Local Raspberry Pi"**
         - [x] Unlocks: Early game (e.g., Player Energy >= 50).
@@ -67,8 +67,8 @@ A clicker game where the player builds up an energy generation empire. Starting 
         - [ ] UI and Logic: Similar to Tier 1.
         - [ ] Implement Unlock Condition visibility (show/hide section, temporary glow, permanent once unlocked).
     - [ ] **Tier 5: "Miniature Fusion Reactor" (Advanced Generator)**
-        - [ ] Unlocks: Late game (e.g., Player Energy >= 50,000,000).
-        - [ ] Base Cost: ~75,000,000 Energy.
+        - [ ] Unlocks: Late game (e.g., Player Energy >= 50,000,000 or Owns 5+ Server Racks).
+        - [ ] Base Cost: ~37,500,000 Energy. (Adjusted from 75M for better pacing)
         - [ ] Base EPS: 50,000 EPS per unit.
         - [ ] Cost scaling per unit: `cost = baseCost * 1.35^owned`.
         - [ ] UI and Logic: Similar to Tier 1.
@@ -92,9 +92,9 @@ A clicker game where the player builds up an energy generation empire. Starting 
     - [x] *Focus: Single representative emojis, very brief text descriptors.*
 - [ ] **Visual Feedback:**
     - [x] Unlock animation/feedback (temporary glow for new sections).
-    - [ ] Animation or effect on main click button.
+    - [x] Animation or effect on main click button.
 - [x] **Upgrade Display:** Clearly show current levels, costs, and contributions, using minimalist theme.
-- [ ] **Autosave/Manual Save:** Persist game state (localStorage is a good option for simplicity).
+- [x] **Autosave/Manual Save:** Persist game state (localStorage is a good option for simplicity).
 - [x] **Clearer Upgrade Buttons:** Distinct buttons for each upgrade type, enable/disable based on affordability (covered by current implementation).
 - [ ] **Theming/Artwork:** (Optional, later stage) Visuals related to energy, tech, and data centers.
 
@@ -135,4 +135,7 @@ A clicker game where the player builds up an energy generation empire. Starting 
 *   Focus on satisfying progression and the chosen theme.
 *   Costs and EPS values are estimates and will need playtesting and iteration.
 *   Consider interplay between click and auto-generation (e.g., click boosts based on % of EPS).
-*   Unlock conditions can be a mix of Energy owned and units of previous tier owned. Unlocks are permanent once achieved for a game session. 
+*   Unlock conditions can be a mix of Energy owned and units of previous tier owned. Unlocks are permanent once achieved for a game session.
+    *   Fusion Reactor cost adjusted from 75M to 37.5M (11/16/2023).
+    *   Fusion Reactor unlock condition changed to also include owning 5+ Server Racks (11/16/2023).
+    *   Initial energyPerClick changed from 1 to 2 (11/16/2023). 

@@ -75,4 +75,28 @@ body:not(.dark-mode) .generator-upgrade {
 @keyframes highlight-unlock {
     0% { box-shadow: 0 0 15px yellow; }
     100% { box-shadow: none; }
+}
+
+#click-button {
+    background-color: #007bff;
+    color: white;
+    border: none;
+    padding: 15px 30px;
+    font-size: 1.5em;
+    cursor: pointer;
+    border-radius: 8px;
+    transition: background-color 0.3s, transform 0.1s;
+}
+
+#click-button:hover {
+    background-color: #005fa3;
+}
+
+/* Click animation for the main button */
+#click-button.clicked {
+    transform: scale(0.95);
+}
+
+#upgrades-container h2 {
+    margin-top: 30px;
 } 
