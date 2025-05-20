@@ -19,6 +19,7 @@ Gateway Generator is a clicker-style incremental game where you build up an ener
 - **Game Features**:
   - Autosave functionality
   - System log for game events
+  - Achievement system with unlockable milestones
   - End-game narrative sequence
   - Mobile-responsive dark mode UI
   - Minimalist emoji-based design

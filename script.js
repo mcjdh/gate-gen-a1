@@ -3,6 +3,82 @@ let energyPerClick = 2;
 let clickUpgradeLevel = 0;
 let clickUpgradeCost = 5;
 
+// Achievement System
+let achievements = [
+    {
+        id: 'first-click', 
+        name: 'First Steps', 
+        description: 'Generate energy for the first time',
+        unlocked: false
+    },
+    {
+        id: 'first-upgrade', 
+        name: 'Enhanced Capabilities', 
+        description: 'Purchase your first click upgrade',
+        unlocked: false
+    },
+    {
+        id: 'first-generator', 
+        name: 'Automation Begins', 
+        description: 'Buy your first automated generator',
+        unlocked: false
+    },
+    {
+        id: 'energy-1000', 
+        name: 'Kilowatt Club', 
+        description: 'Reach 1,000 energy',
+        unlocked: false
+    },
+    {
+        id: 'energy-10000', 
+        name: 'Power Surge', 
+        description: 'Reach 10,000 energy',
+        unlocked: false
+    },
+    {
+        id: 'energy-100000', 
+        name: 'Energy Magnate', 
+        description: 'Reach 100,000 energy',
+        unlocked: false
+    },
+    {
+        id: 'energy-1000000', 
+        name: 'Megacorp Status', 
+        description: 'Reach 1,000,000 energy',
+        unlocked: false
+    },
+    {
+        id: 'rpi-10', 
+        name: 'Small Network', 
+        description: 'Own 10 Raspberry Pis',
+        unlocked: false
+    },
+    {
+        id: 'desktop-5', 
+        name: 'Computing Cluster', 
+        description: 'Own 5 Desktop GPUs',
+        unlocked: false
+    },
+    {
+        id: 'unlock-all-generators', 
+        name: 'Tech Enthusiast', 
+        description: 'Unlock all generator tiers',
+        unlocked: false
+    },
+    {
+        id: 'unlock-datacenter', 
+        name: 'Breaking Ground', 
+        description: 'Unlock the Gateway Datacenter',
+        unlocked: false
+    },
+    {
+        id: 'complete-game', 
+        name: 'Gateway Architect', 
+        description: 'Complete the Gateway with the AI Core',
+        unlocked: false
+    }
+];
+
 // Raspberry Pi Stats
 let rpiOwned = 0;
 const RPI_BASE_COST = 20;
@@ -84,6 +160,11 @@ const GAME_SAVE_KEY = 'gatewayGeneratorSave';
 const systemLogMessages = document.getElementById('system-log-messages');
 const MAX_LOG_MESSAGES = 20; // Keep the log from getting too long
 
+// Achievement Elements
+const achievementsContainer = document.getElementById('achievements-container');
+const achievementsList = document.getElementById('achievements-list');
+const toggleAchievementsBtn = document.getElementById('toggle-achievements-btn');
+
 // Reset Game Button Element
 const resetGameButton = document.getElementById('reset-game-button');
 
@@ -144,6 +225,12 @@ function resetGameToDefaults() {
 
     gameWon = false; // Reset win state
     shownMilestones = {}; // Reset shown milestones
+    
+    // Reset achievements
+    achievements.forEach(achievement => {
+        achievement.unlocked = false;
+    });
+    
     // Total EPS will be recalculated by calculateAllEps()
     // Individual generator EPS will be zero due to owned counts being zero.
 }
@@ -182,6 +269,7 @@ function saveGameState() {
         aiCoreUnlocked,
         gameWon,
         shownMilestones,
+        achievements,
         // Note: Base costs and base EPS are constants, no need to save.
         // Total EPS is calculated, no need to save.
     };
@@ -255,6 +343,19 @@ function loadGameState() {
 
                 gameWon = savedState.gameWon !== undefined ? savedState.gameWon : false;
                 shownMilestones = savedState.shownMilestones !== undefined ? savedState.shownMilestones : {}; // Load shown milestones
+                
+                // Load achievements if they exist
+                if (savedState.achievements) {
+                    // Merge saved achievement unlock status with default achievements
+                    // This ensures new achievements added in updates are properly initialized
+                    savedState.achievements.forEach(savedAchievement => {
+                        const achievementIndex = achievements.findIndex(a => a.id === savedAchievement.id);
+                        if (achievementIndex !== -1) {
+                            achievements[achievementIndex].unlocked = savedAchievement.unlocked;
+                        }
+                    });
+                }
+                
                 console.log("Game loaded!");
             }
             
@@ -755,6 +856,7 @@ clickButton.addEventListener('click', () => {
     const epsClickBonus = Math.floor(totalEps * 0.01); // 1% of totalEps
     energy += (energyPerClick + epsClickBonus);
     updateDisplays();
+    checkAchievements(); // Check for achievement unlocks after clicking
     // No save on click for performance, autosave will handle it.
 });
 
@@ -770,6 +872,7 @@ upgradeClickPowerButton.addEventListener('click', () => {
             addLogMessage(`Click Power upgraded to Level ${clickUpgradeLevel}. EPC: ${energyPerClick}. Cost for next: ${formatNumber(clickUpgradeCost)} ⚡️`, "purchase");
         }
         updateDisplays();
+        checkAchievements(); // Check for achievement unlocks
         saveGameState(); 
     }
 });
@@ -787,6 +890,7 @@ buyRpiButton.addEventListener('click', () => {
         // The log for 10th, 20th etc. R-Pi is handled in updateDisplays/checkUnlocks implicitly by not logging here.
         calculateAllEps();
         updateDisplays();
+        checkAchievements(); // Check for achievement unlocks
         saveGameState(); 
     }
 });
@@ -803,6 +907,7 @@ buyDesktopButton.addEventListener('click', () => {
         }
         calculateAllEps();
         updateDisplays();
+        checkAchievements(); // Check for achievement unlocks
         saveGameState();
     }
 });
@@ -906,6 +1011,7 @@ function triggerWinCondition() {
     gameWon = true;
 
     addLogMessage("AI Gateway Core online. The Architect's vision nears completion. The Gateway prepares for the First Resonance and awaits the Convergence.", "milestone");
+    checkAchievements(); // Check for the game completion achievement
     saveGameState(); // Save a final time before the end screen
 
     const endGameScreen = document.getElementById('end-game-screen');
@@ -1074,12 +1180,156 @@ if (aiContinueButton) {
 function gameLoop() {
     energy += totalEps / 10; // Add a fraction of EPS 10 times per second for smoother display
     updateDisplays();
+    checkAchievements(); // Check for achievement unlocks
 }
 
 // --- INITIALIZE GAME ---
 loadGameState(); // Load game state first
 calculateAllEps(); // Then calculate EPS based on loaded values
 updateDisplays(); // Then update all displays
+renderAchievements(); // Render the achievements panel
+
+// Achievement toggle button event listener
+if (toggleAchievementsBtn) {
+    toggleAchievementsBtn.addEventListener('click', () => {
+        const list = document.getElementById('achievements-list');
+        if (list.style.display === 'none') {
+            list.style.display = 'grid';
+            toggleAchievementsBtn.textContent = '▼';
+        } else {
+            list.style.display = 'none';
+            toggleAchievementsBtn.textContent = '►';
+        }
+    });
+}
+
+// Function to render all achievements to the panel
+function renderAchievements() {
+    if (!achievementsList) return;
+    
+    // Clear existing achievements
+    achievementsList.innerHTML = '';
+    
+    // Render all achievements
+    achievements.forEach(achievement => {
+        const achievementElement = document.createElement('div');
+        achievementElement.className = `achievement ${achievement.unlocked ? 'unlocked' : ''}`;
+        achievementElement.dataset.id = achievement.id;
+        
+        const nameElement = document.createElement('div');
+        nameElement.className = 'achievement-name';
+        nameElement.textContent = achievement.unlocked ? `🏆 ${achievement.name}` : `🔒 ${achievement.name}`;
+        
+        const descElement = document.createElement('div');
+        descElement.className = 'achievement-desc';
+        descElement.textContent = achievement.description;
+        
+        achievementElement.appendChild(nameElement);
+        achievementElement.appendChild(descElement);
+        achievementsList.appendChild(achievementElement);
+    });
+}
+
+// Function to check for newly unlocked achievements
+function checkAchievements() {
+    let newUnlocks = false;
+    
+    // First click
+    if (!achievements.find(a => a.id === 'first-click').unlocked && energy > 0) {
+        unlockAchievement('first-click');
+        newUnlocks = true;
+    }
+    
+    // First upgrade
+    if (!achievements.find(a => a.id === 'first-upgrade').unlocked && clickUpgradeLevel > 0) {
+        unlockAchievement('first-upgrade');
+        newUnlocks = true;
+    }
+    
+    // First generator
+    if (!achievements.find(a => a.id === 'first-generator').unlocked && rpiOwned > 0) {
+        unlockAchievement('first-generator');
+        newUnlocks = true;
+    }
+    
+    // Energy milestones
+    if (!achievements.find(a => a.id === 'energy-1000').unlocked && energy >= 1000) {
+        unlockAchievement('energy-1000');
+        newUnlocks = true;
+    }
+    
+    if (!achievements.find(a => a.id === 'energy-10000').unlocked && energy >= 10000) {
+        unlockAchievement('energy-10000');
+        newUnlocks = true;
+    }
+    
+    if (!achievements.find(a => a.id === 'energy-100000').unlocked && energy >= 100000) {
+        unlockAchievement('energy-100000');
+        newUnlocks = true;
+    }
+    
+    if (!achievements.find(a => a.id === 'energy-1000000').unlocked && energy >= 1000000) {
+        unlockAchievement('energy-1000000');
+        newUnlocks = true;
+    }
+    
+    // Generator count achievements
+    if (!achievements.find(a => a.id === 'rpi-10').unlocked && rpiOwned >= 10) {
+        unlockAchievement('rpi-10');
+        newUnlocks = true;
+    }
+    
+    if (!achievements.find(a => a.id === 'desktop-5').unlocked && desktopOwned >= 5) {
+        unlockAchievement('desktop-5');
+        newUnlocks = true;
+    }
+    
+    // Unlock all generators
+    if (!achievements.find(a => a.id === 'unlock-all-generators').unlocked && 
+        desktopGpuUnlocked && miningRigUnlocked && serverRackUnlocked && fusionReactorUnlocked) {
+        unlockAchievement('unlock-all-generators');
+        newUnlocks = true;
+    }
+    
+    // Unlock datacenter
+    if (!achievements.find(a => a.id === 'unlock-datacenter').unlocked && foundationCoolingUnlocked) {
+        unlockAchievement('unlock-datacenter');
+        newUnlocks = true;
+    }
+    
+    // Complete game
+    if (!achievements.find(a => a.id === 'complete-game').unlocked && gameWon) {
+        unlockAchievement('complete-game');
+        newUnlocks = true;
+    }
+    
+    if (newUnlocks) {
+        renderAchievements();
+        saveGameState();
+    }
+}
+
+// Function to unlock an achievement
+function unlockAchievement(id) {
+    const achievement = achievements.find(a => a.id === id);
+    if (achievement && !achievement.unlocked) {
+        achievement.unlocked = true;
+        
+        // Show message in system log
+        addLogMessage(`Achievement Unlocked: ${achievement.name} - ${achievement.description}`, "milestone");
+        
+        // Highlight the achievement in the panel
+        setTimeout(() => {
+            const achievementElement = document.querySelector(`.achievement[data-id="${id}"]`);
+            if (achievementElement) {
+                achievementElement.classList.add('new-unlock');
+                setTimeout(() => {
+                    achievementElement.classList.remove('new-unlock');
+                }, 2000);
+            }
+        }, 100);
+    }
+}
 
 setInterval(gameLoop, 100); // Run game loop 10 times per second
 setInterval(saveGameState, 30000); // Autosave every 30 seconds

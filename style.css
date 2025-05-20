@@ -176,6 +176,112 @@ body:not(.dark-mode) #system-log-container {
     border: 1px solid #ddd; /* Light mode border */
 }
 
+/* Achievements Styling */
+#achievements-container {
+    border: 1px solid #555; /* Dark mode border */
+    border-radius: 4px;
+    margin-top: 15px;
+    margin-bottom: 15px;
+    padding: 10px;
+    display: flex;
+    flex-direction: column;
+}
+
+body:not(.dark-mode) #achievements-container {
+    border: 1px solid #ddd; /* Light mode border */
+}
+
+#achievements-header {
+    font-weight: bold;
+    margin-bottom: 5px;
+    text-align: left;
+    color: #ffc107; /* Amber for achievements */
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+}
+
+#toggle-achievements-btn {
+    background: none;
+    border: none;
+    color: #ffc107;
+    font-size: 1em;
+    cursor: pointer;
+    padding: 0;
+    width: 24px;
+    height: 24px;
+}
+
+#toggle-achievements-btn:hover {
+    color: #e5ac06;
+}
+
+#achievements-list {
+    overflow-y: auto;
+    max-height: 200px;
+    display: grid;
+    grid-template-columns: repeat(auto-fill, minmax(200px, 1fr));
+    gap: 10px;
+    padding: 5px 0;
+}
+
+@media (max-width: 600px) {
+    #achievements-list {
+        grid-template-columns: 1fr;
+    }
+}
+
+.achievement {
+    border: 1px solid #444;
+    border-radius: 4px;
+    padding: 8px;
+    background-color: #333;
+    opacity: 0.7;
+}
+
+body:not(.dark-mode) .achievement {
+    border: 1px solid #ccc;
+    background-color: #f0f0f0;
+}
+
+.achievement.unlocked {
+    border-color: #ffc107;
+    opacity: 1;
+    background-color: #3a3a25;
+}
+
+body:not(.dark-mode) .achievement.unlocked {
+    background-color: #fffaed;
+}
+
+.achievement-name {
+    font-weight: bold;
+    margin-bottom: 4px;
+    color: #ffc107; /* Amber for unlocked */
+}
+
+.achievement:not(.unlocked) .achievement-name {
+    color: #aaa; /* Grayed out for locked */
+}
+
+.achievement-desc {
+    font-size: 0.85em;
+    color: #ccc;
+}
+
+body:not(.dark-mode) .achievement-desc {
+    color: #666;
+}
+
+.achievement.new-unlock {
+    animation: achievement-unlock 2s ease-out;
+}
+
+@keyframes achievement-unlock {
+    0% { transform: scale(1.05); box-shadow: 0 0 15px #ffc107; }
+    100% { transform: scale(1); box-shadow: none; }
+}
+
 #system-log-header {
     font-weight: bold;
     margin-bottom: 5px;
