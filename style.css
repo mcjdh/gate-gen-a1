@@ -353,16 +353,30 @@ body:not(.dark-mode) #reset-container {
 }
 
 @keyframes text-glow-color {
-    from {
-        text-shadow: 0 0 5px rgba(0, 255, 0, 0.7),
+    0% {
+        text-shadow: 0 0 5px rgba(0, 255, 0, 0.7), /* Green */
                      0 0 10px rgba(0, 255, 0, 0.5),
                      0 0 15px rgba(0, 255, 0, 0.3);
     }
-    to {
-        text-shadow: 0 0 10px rgba(0, 255, 0, 0.9),
-                     0 0 15px rgba(0, 255, 0, 0.7),
-                     0 0 20px rgba(0, 255, 0, 0.5),
-                     0 0 25px rgba(40, 167, 69, 0.5); /* Added a secondary, slightly softer green */
+    25% {
+        text-shadow: 0 0 5px rgba(0, 150, 255, 0.7), /* Blue */
+                     0 0 10px rgba(0, 150, 255, 0.5),
+                     0 0 15px rgba(0, 150, 255, 0.3);
+    }
+    50% {
+        text-shadow: 0 0 5px rgba(150, 0, 255, 0.7), /* Purple */
+                     0 0 10px rgba(150, 0, 255, 0.5),
+                     0 0 15px rgba(150, 0, 255, 0.3);
+    }
+    75% {
+        text-shadow: 0 0 5px rgba(255, 200, 0, 0.7), /* Gold/Yellow */
+                     0 0 10px rgba(255, 200, 0, 0.5),
+                     0 0 15px rgba(255, 200, 0, 0.3);
+    }
+    100% {
+        text-shadow: 0 0 5px rgba(255, 0, 150, 0.7), /* Pink/Magenta */
+                     0 0 10px rgba(255, 0, 150, 0.5),
+                     0 0 15px rgba(255, 0, 150, 0.3);
     }
 }
 
