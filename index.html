@@ -3,14 +3,36 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gateway Generator</title>
+    <title>Gateway Generator 🚪🏢</title>
     <link rel="stylesheet" href="style.css">
 </head>
 <body>
     <div id="game-container">
-        <h1>Gateway Generator</h1>
-        <p>Energy: <span id="energyDisplay">0</span></p>
-        <button id="click-button">Click Me!</button>
+        <h1>Gateway Generator 🚪🏢</h1>
+        <p>⚡️ Energy: <span id="energyDisplay">0</span></p>
+        <p>🖱️ EPC: <span id="energyPerClickDisplay">1</span></p>
+        <p>⚙️ EPS: <span id="totalEpsDisplay">0</span></p>
+        <button id="click-button">Generate ⚡️</button>
+
+        <div id="upgrades-container">
+            <h2>✨ Manual Upgrades</h2>
+            <button id="upgrade-click-power">✨ Clicks | Lv. <span id="clickUpgradeLevel">0</span> | <span id="clickUpgradeCost">10</span> ⚡️</button>
+            
+            <h2>🤖 Auto Generators</h2>
+            <div class="generator-upgrade">
+                <p>🍓 R-Pi x<span id="rpiOwnedDisplay">0</span> (+<span id="rpiEpsDisplay">0</span> EPS)</p>
+                <button id="buy-rpi">Buy: <span id="rpiCostDisplay">100</span> ⚡️</button>
+            </div>
+            <div class="generator-upgrade" id="desktop-gpu-upgrade-section">
+                <p>🖥️ Desktop x<span id="desktopOwnedDisplay">0</span> (+<span id="desktopEpsDisplay">0</span> EPS)</p>
+                <button id="buy-desktop">Buy: <span id="desktopCostDisplay">750</span> ⚡️</button>
+            </div>
+            <!-- New 6 GPU Mining Rig Upgrade -->
+            <div class="generator-upgrade" id="mining-rig-upgrade-section">
+                <p>⛏️ Rig x<span id="rigOwnedDisplay">0</span> (+<span id="rigEpsDisplay">0</span> EPS)</p>
+                <button id="buy-rig">Buy: <span id="rigCostDisplay">15000</span> ⚡️</button>
+            </div>
+        </div>
     </div>
     <script src="script.js"></script>
 </body>

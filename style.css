@@ -50,4 +50,29 @@ body.dark-mode button {
 
 body.dark-mode button:hover {
     background-color: #777;
+}
+
+/* Generator Upgrade Styling */
+.generator-upgrade {
+    border: 1px solid #555; /* Dark mode border */
+    padding: 10px;
+    margin-top: 10px;
+    border-radius: 4px;
+}
+
+body:not(.dark-mode) .generator-upgrade {
+    border: 1px solid #ddd; /* Light mode border */
+}
+
+.generator-upgrade p {
+    margin-top: 0;
+}
+
+.newly-unlocked {
+    animation: highlight-unlock 2s ease-out;
+}
+
+@keyframes highlight-unlock {
+    0% { box-shadow: 0 0 15px yellow; }
+    100% { box-shadow: none; }
 } 
