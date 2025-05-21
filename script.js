@@ -89,6 +89,7 @@ let energyHistory = [];
 const ENERGY_HISTORY_MAX_POINTS = 60; // 15 seconds at 0.25s per sample
 const ENERGY_HISTORY_SAMPLE_RATE = 250; // milliseconds
 let lastEnergySample = Date.now();
+let graphUpdateTimer; // Timer for continuous graph updates
 
 // --- LOCALSTORAGE SAVE/LOAD ---
 const GAME_SAVE_KEY = 'gatewayGeneratorSave';
@@ -968,6 +969,11 @@ buyAiCoreButton.addEventListener('click', () => {
 function triggerWinCondition() {
     if (gameWon) return; // If already won, do nothing
     gameWon = true;
+    
+    // Clear the graph update timer
+    if (graphUpdateTimer) {
+        clearInterval(graphUpdateTimer);
+    }
 
     addLogMessage("AI Gateway Core online. THE VOICE Protocol active. The Gateway awaits the First Resonance for the Convergence.", "milestone");
     saveGameState(); // Save a final time before the end screen
@@ -1256,9 +1262,24 @@ if (resetGameButton) {
     resetGameButton.addEventListener('click', () => {
         if (window.confirm("Are you sure you want to reset all your game progress? This cannot be undone.")) {
             localStorage.removeItem(GAME_SAVE_KEY);
+            
+            // Clear existing graph update timer
+            if (graphUpdateTimer) {
+                clearInterval(graphUpdateTimer);
+            }
+            
             resetGameToDefaults();
             calculateAllEps();
             updateDisplays();
+            
+            // Reinitialize the energy history graph
+            initializeEnergyHistory();
+            
+            // Restart graph update timer
+            graphUpdateTimer = setInterval(() => {
+                updateEnergyHistory();
+            }, ENERGY_HISTORY_SAMPLE_RATE);
+            
             addLogMessage("Game progress has been manually reset.", "info");
         }
     });
@@ -1329,14 +1350,29 @@ function initializeEnergyHistory() {
 // Call it to initialize the graph
 initializeEnergyHistory();
 
+// Set up continuous graph updates
+graphUpdateTimer = setInterval(() => {
+    updateEnergyHistory();
+}, ENERGY_HISTORY_SAMPLE_RATE);
+
 // --- ASCII ENERGY GRAPH FUNCTIONS ---
 /**
  * Updates the energy history array for the ASCII graph
  */
 function updateEnergyHistory() {
     const now = Date.now();
+    // Always add a new sample point at the appropriate rate
     if (now - lastEnergySample >= ENERGY_HISTORY_SAMPLE_RATE) {
-        energyHistory.push(energy);
+        // If we have at least one point, and the energy hasn't changed,
+        // add a very slight variation to make the graph more interesting
+        if (energyHistory.length > 0 && Math.abs(energy - energyHistory[energyHistory.length - 1]) < 0.001) {
+            // Add a tiny random variation to create visual interest when energy is static
+            const variation = energy * 0.001 * (Math.random() - 0.5);
+            energyHistory.push(energy + variation);
+        } else {
+            energyHistory.push(energy);
+        }
+        
         if (energyHistory.length > ENERGY_HISTORY_MAX_POINTS) {
             energyHistory.shift();
         }
