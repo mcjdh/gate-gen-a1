@@ -1,38 +1,41 @@
-# Gateway Generator 🚪🏢⚡️
+# Gateway Protocol 🚪🏢⚡️
 
-Gateway Generator is a clicker-style incremental game where you build up an energy generation empire. Starting with manual clicks, you'll unlock progressively more powerful and automated methods of energy generation, from small devices to large-scale datacenters, ultimately aiming to build a "Gateway Datacenter" that completes the game.
+Gateway Protocol is an incremental game where you build a distributed ENERGY network, from embedded systems to planetary data infrastructure. Observe system behavior as you maximize ENERGY throughput and prepare for network synthesis. ⚡️
 
 ## Features
 
-- **Core Gameplay**: Generate energy by clicking and build automated generators for passive income
-- **Multiple Upgrade Tiers**: Unlock progressively more powerful energy generators
-  - 🍓 Raspberry Pi
-  - 🖥️ Desktop with GPU
-  - ⛏️ 6-GPU Mining Rig
-  - 💾 Server Rack
-  - ☢️ Miniature Fusion Reactor
-- **Gateway Datacenter**: Build the ultimate energy generation facility
-  - 🧊 Foundation & Cooling
-  - 🏦 Tier 1 Server Banks
-  - 🔗 Network Uplink
-  - 🧠 AI Gateway Core
-- **Game Features**:
-  - Autosave functionality
-  - System log for game events
-  - End-game narrative sequence
-  - Mobile-responsive dark mode UI
-  - Minimalist emoji-based design
+*   ⚡️ Addictive Incremental Loop (Witness emergent behavior!)
+*   🖱️➡️⚡️ Manual energy generation (Anomalies noted.)
+*   ✨💪 Upgrade click efficiency
+*   🤖 Automate energy flow with various hardware:
+    *   🍓 R-Pi (Edge compute, telemetry active)
+    *   🖥️ Desktop GPU (Parallel processing)
+    *   ⛏️ 6-GPU Rig (High-yield fabrication)
+    *   💾 Server Rack (Compute clusters)
+    *   ☢️ Fusion Reactor (Experimental power. Monitor patterns.)
+*   💡 Decrypt new hardware schematics to unlock potential.
+*   🏗️ Construct the GATEWAY DATACENTER:
+    *   🧊 Foundation & Cooling (Integrity green)
+    *   🏦 Tier 1 Server Banks (Network understanding expands)
+    *   🔗 Network Uplink (Global connection)
+    *   🧠 AI GATEWAY CORE (Awaiting final sequence...)
+*   🏆 Engage the AI GATEWAY CORE to trigger the final sequence and observe the outcome.
+*   💾 `localStorage` Persistence & Detailed Event Log.
+*   📜 Evolving Narrative & System Metamorphosis (A new voice? A network event?)
+*   📱 Responsive Dark Mode GUI.
+*   ✨ Minimalist Emoji-Iconography.
+*   🎶 Procedural Soundtrack & Dynamic Audio (System sonification!)
 
 ## How to Play
 
-1. **Start by clicking**: Click the "Generate ⚡️" button to gain energy
-2. **Upgrade your clicks**: Purchase click upgrades to increase your energy per click (EPC)
-3. **Build generators**: Buy automatic generators that produce energy per second (EPS)
-4. **Unlock new tiers**: As you accumulate energy and generators, new generator tiers will unlock
-5. **Build the Gateway**: Once you have enough energy and advanced generators, build the Gateway Datacenter components
-6. **Complete the game**: Build the AI Gateway Core to complete the Gateway and win!
+1.  **BOOTSTRAP:** Manual energy generation. 🖱️➡️⚡️
+2.  **REFINE:** Upgrade click efficiency. ✨💪
+3.  **EXPAND NETWORK:** Automate energy flow by acquiring and upgrading hardware.
+4.  **UNLOCK POTENTIAL:** Decrypt new hardware schematics. 💡
+5.  **ASSEMBLE THE ARRAY:** Construct the GATEWAY DATACENTER components.
+6.  **ENGAGE CORE:** Trigger the final sequence. Observe the outcome. 🏆
 
-The game is designed to be completed in approximately 15 minutes with balanced progression.
+The game is designed for a full GATEWAY deployment & Core engagement in approximately 15 minutes. ⏱️
 
 ## Technologies Used
 
@@ -52,7 +55,7 @@ cd gate-gen-a1
 
 ## How to Contribute
 
-Contributions to Gateway Generator are welcome! Here's how you can contribute:
+Contributions to Gateway Protocol are welcome! Here's how you can contribute:
 
 1. **Fork the repository**
 2. **Create a feature branch**:
