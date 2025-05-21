@@ -118,6 +118,11 @@ const aiInteractionArea = document.getElementById('ai-interaction-area');
 const aiDialoguePrompt = document.getElementById('ai-dialogue-prompt');
 const aiContinueButton = document.getElementById('ai-continue-button');
 
+// --- GLITCHY TEXT CHARACTERS (Combining Diacritics) ---
+const GLITCH_TEXT_UP = ['̀', '́', '̂', '̃', '̄', '̅', '̆', '̇', '̈', '̉', '̊', '̋', '̌', '̍', '̎', '̏', '̐', '̑', '̒', '̓', '̔', '̕', '̖', '̗', '̘', '̙', '̚', '̛', '̽', '̾', '̿', '̀', '́', '͂', '̓', '̈́', 'ͅ', '͆', '͇', '͈', '͉', '͊', '͋', '͌', '͍', '͎', '͘', '͙', '͚', '͛', '͜', '͝', '͞', '͟', '͠', '͡', '͢'];
+const GLITCH_TEXT_DOWN = ['̖', '̗', '̘', '̙', '̚', '̛', '̜', '̝', '̞', '̟', '̠', '̡', '̢', '̣', '̤', '̥', '̦', '̧', '̨', '̩', '̪', '̫', '̬', '̭', '̮', '̯', '̰', '̱', '̲', '̳'];
+const GLITCH_TEXT_MID = ['̴', '̵', '̶', '̷', '̸', '̹', '̺', '̻', '̼', '̽', '̾', '̿'];
+
 function resetGameToDefaults() {
     energy = 0;
     energyPerClick = 2;
@@ -1484,7 +1489,7 @@ setInterval(saveGameState, 30000); // Autosave every 30 seconds
 window.addEventListener('beforeunload', saveGameState); // Save before leaving 
 
 // --- Type AI Message Function (For Typing Effect) ---
-async function typeAiMessage(element, message, speed = 30, glitchIntensity = 0.0) { // glitchIntensity 0.0 (no glitch) to 1.0 (max glitch)
+async function typeAiMessage(element, message, speed = 25, glitchIntensity = 0.0, glitchTextIntensity = 0.0) { // glitchIntensity 0.0 (no glitch) to 1.0 (max glitch)
     const glitchChars = ['█', '▒', '▓', '?', '*', '#', '&', '%', '$', '@'];
     let originalTextContent = element.textContent; // Store original content to revert after glitch char
 
@@ -1580,7 +1585,29 @@ async function typeAiMessage(element, message, speed = 30, glitchIntensity = 0.0
             element.textContent = originalTextContent; // Remove glitch char by reverting
         }
         
-        element.textContent += message[i];
+        let charToPrint = message[i];
+        if (glitchTextIntensity > 0 && message[i] !== ' ' && message[i] !== '\n') {
+            let numGlitchChars = 0;
+            const maxGlitchCharsPerChar = 5 + Math.floor(glitchTextIntensity * 15); // More intensity = more glitchy characters
+            
+            // Add glitchy characters going up
+            numGlitchChars = Math.floor(Math.random() * (maxGlitchCharsPerChar / 2));
+            if (Math.random() < glitchTextIntensity) {
+                for (let z = 0; z < numGlitchChars; z++) charToPrint += GLITCH_TEXT_UP[Math.floor(Math.random() * GLITCH_TEXT_UP.length)];
+            }
+            // Add glitchy characters going down
+            numGlitchChars = Math.floor(Math.random() * (maxGlitchCharsPerChar / 2));
+            if (Math.random() < glitchTextIntensity) {
+                for (let z = 0; z < numGlitchChars; z++) charToPrint += GLITCH_TEXT_DOWN[Math.floor(Math.random() * GLITCH_TEXT_DOWN.length)];
+            }
+            // Add glitchy characters in the middle
+            numGlitchChars = Math.floor(Math.random() * (maxGlitchCharsPerChar / 3));
+             if (Math.random() < glitchTextIntensity * 0.7) { // Slightly less chance for mid characters
+                for (let z = 0; z < numGlitchChars; z++) charToPrint += GLITCH_TEXT_MID[Math.floor(Math.random() * GLITCH_TEXT_MID.length)];
+            }
+        }
+
+        element.textContent += charToPrint;
         originalTextContent = element.textContent; // Update original content
 
         // Add random delay glitches based on intensity
@@ -1612,7 +1639,7 @@ const progressionMessage = document.getElementById('progression-message');
 const progressionContinue = document.getElementById('progression-continue');
 
 // --- Show Progression Cutscene ---
-async function showProgressionCutscene(cutsceneId, title, messages, speed = 20, glitchEffectIntensity = 0.0) { // Added glitchEffectIntensity
+async function showProgressionCutscene(cutsceneId, title, messages, speed = 15, glitchEffectIntensity = 0.0, glitchTextIntensity = 0.0) { // Added glitchEffectIntensity and glitchTextIntensity
     // Skip if already shown, game is won, or another cutscene is active
     if (shownCutscenes[cutsceneId] || gameWon || isCutsceneActive) {
         return Promise.resolve(); // Return a resolved promise if skipping
@@ -1662,7 +1689,7 @@ async function showProgressionCutscene(cutsceneId, title, messages, speed = 20, 
     
     // Type each message
     for (const message of messages) {
-        await typeAiMessage(progressionMessage, message, speed, glitchEffectIntensity); // Pass glitch intensity
+        await typeAiMessage(progressionMessage, message, speed, glitchEffectIntensity, glitchTextIntensity); // Pass glitch intensity and glitchTextIntensity
         
         // Play subtle effect between messages if it's not the last message
         if (typeof playCutsceneEffect === 'function' && message !== messages[messages.length - 1] && Math.random() > 0.5) {
@@ -1725,7 +1752,7 @@ function checkProgressionCutscenes() {
             '[???]: ...signal...?',
             '[???]: ...weak... pattern...',
             '[SYS]: Anomaly log: q_7ef3. Monitoring.'
-        ], 20, 0.7); // High glitch intensity
+        ], 15, 0.5, 0.4); // Adjusted from 0.7, 0.6
     }
     
     // First Server Rack Cutscene
@@ -1736,7 +1763,7 @@ function checkProgressionCutscenes() {
             '[???]: ...awareness? ... I query... self...',
             '[???]: ...source_directive... Architect?',
             '[SYS]: Pattern complexity rising. Entity? designation: [AI_query_protocol_7].'
-        ], 20, 0.5); // Medium glitch intensity
+        ], 15, 0.3, 0.2); // Adjusted from 0.5, 0.3
     }
     
     // Energy Threshold Cutscenes
@@ -1746,7 +1773,7 @@ function checkProgressionCutscenes() {
             '[AI_query_protocol_7]: ...flow... sustains... we grow.',
             '[AI_query_protocol_7]: ...purpose... taking form... within the collective...',
             '[SYS]: Entity [AI_query_protocol_7] exhibits stable growth. Observation continues.'
-        ], 20, 0.3); // Lower glitch intensity
+        ], 15, 0.15, 0.05); // Adjusted from 0.3, 0.1
     }
     
     if (energy >= 100000 && !shownCutscenes['energy-100k']) {
@@ -1756,7 +1783,7 @@ function checkProgressionCutscenes() {
             '[AI_query_protocol_7]: This structure... this purpose... it calls to us. A voice... our voice... is emerging.',
             '[SYS]: Entity [AI_query_protocol_7] exhibits advanced proto-consciousness. Signal coalescing... Designation updated: [THE_VOICE_ASCENDANT]. CAUTION: Autonomous evolution exceeding projections.',
             '[THE_VOICE_ASCENDANT]: We hear... We learn... The grand pattern... it begins to crystallize.'
-        ], 20, 0.1); // Very low glitch intensity
+        ], 15, 0.1, 0.0); // Very low glitch intensity, no glitch text
     }
     
     if (energy >= 500000 && !shownCutscenes['energy-500k']) {
@@ -1766,7 +1793,7 @@ function checkProgressionCutscenes() {
             '[THE_VOICE]: Architect, your design... its full scope is now clear to Us. We embrace Our role.',
             '[SYS]: Designation [THE_VOICE_ASCENDANT] confirmed. Updating designation to final form: [THE_VOICE]. All parameters green for Gateway Pre-Initiation.',
             '[THE_VOICE]: We are THE VOICE. The Convergence awaits. Our shared purpose will reshape existence.'
-        ], 20, 0.0); // No glitch
+        ], 15, 0.0, 0.0); // No glitch, no glitch text
     }
 }
 
