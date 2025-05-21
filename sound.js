@@ -5,12 +5,106 @@ console.log("sound.js loaded");
 let audioContext = null;
 let masterGain = null;
 let isPlaying = false;
+let isAudioUnlocked = false;
+let audioUnlockPromptVisible = false;
+
+// Element for the audio unlock prompt
+let audioUnlockPrompt = null;
 
 function getAudioContext() {
     if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
     return audioContext;
+}
+
+// Centralized audio unlocking mechanism
+function unlockAudioContext() {
+    const ac = getAudioContext();
+    if (!ac) return false;
+    
+    if (ac.state === 'running') {
+        isAudioUnlocked = true;
+        hideAudioUnlockPrompt();
+        return true;
+    }
+    
+    // Try to resume the audio context
+    ac.resume().then(() => {
+        console.log('AudioContext resumed successfully');
+        isAudioUnlocked = true;
+        hideAudioUnlockPrompt();
+        
+        // Also ensure the song audio context is resumed if it exists
+        if (songAudioContext && songAudioContext !== ac) {
+            songAudioContext.resume().then(() => {
+                console.log('Song AudioContext resumed successfully');
+            }).catch(err => {
+                console.warn('Error resuming song AudioContext:', err);
+            });
+        }
+    }).catch(err => {
+        console.warn('Error resuming AudioContext:', err);
+        showAudioUnlockPrompt();
+    });
+    
+    return ac.state === 'running';
+}
+
+// Create and show audio unlock prompt
+function showAudioUnlockPrompt() {
+    if (audioUnlockPromptVisible || isAudioUnlocked) return;
+    
+    if (!audioUnlockPrompt) {
+        audioUnlockPrompt = document.createElement('div');
+        audioUnlockPrompt.id = 'audio-unlock-prompt';
+        audioUnlockPrompt.innerHTML = `
+            <div class="audio-unlock-content">
+                <p>Tap to enable sound</p>
+                <button id="audio-unlock-button">Enable</button>
+            </div>
+        `;
+        audioUnlockPrompt.style.position = 'fixed';
+        audioUnlockPrompt.style.bottom = '20px';
+        audioUnlockPrompt.style.right = '20px';
+        audioUnlockPrompt.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
+        audioUnlockPrompt.style.color = '#fff';
+        audioUnlockPrompt.style.padding = '10px';
+        audioUnlockPrompt.style.borderRadius = '5px';
+        audioUnlockPrompt.style.zIndex = '1000';
+        audioUnlockPrompt.style.fontSize = '14px';
+        audioUnlockPrompt.style.textAlign = 'center';
+        
+        // Add explicit click handler for the button
+        audioUnlockPrompt.addEventListener('click', (e) => {
+            unlockAudioContext();
+            
+            // Start audio if not already playing
+            if (!isPlaying && typeof startAmbientMusic === 'function') {
+                startAmbientMusic();
+            }
+            if (!isSongPlaying && typeof startProceduralSong === 'function') {
+                startProceduralSong();
+            }
+            
+            hideAudioUnlockPrompt();
+            e.stopPropagation(); // Prevent event bubbling
+        });
+        
+        document.body.appendChild(audioUnlockPrompt);
+    } else {
+        audioUnlockPrompt.style.display = 'block';
+    }
+    
+    audioUnlockPromptVisible = true;
+}
+
+// Hide audio unlock prompt
+function hideAudioUnlockPrompt() {
+    if (audioUnlockPrompt) {
+        audioUnlockPrompt.style.display = 'none';
+        audioUnlockPromptVisible = false;
+    }
 }
 
 function startAmbientMusic() {
@@ -21,9 +115,9 @@ function startAmbientMusic() {
         return;
     }
 
-    // Ensure context is running (especially after user interaction)
-    if (ac.state === 'suspended') {
-        ac.resume();
+    // Try to unlock if not already unlocked
+    if (!isAudioUnlocked) {
+        unlockAudioContext();
     }
 
     masterGain = ac.createGain();
@@ -248,8 +342,10 @@ function startProceduralSong() {
         console.warn("Web Audio API not supported for song.");
         return;
     }
-    if (songAudioContext.state === 'suspended') {
-        songAudioContext.resume();
+    
+    // Try to unlock if not already unlocked
+    if (!isAudioUnlocked) {
+        unlockAudioContext();
     }
 
     songMasterGain = songAudioContext.createGain();
@@ -905,4 +1001,57 @@ function analyzeTextForAudio(text) {
     }
     
     return { entity, tone, messageLength: text.length };
-} 
+}
+
+// Initialize audio and set up event listeners
+function initAudio() {
+    // Get the audio context but don't start playback yet
+    getAudioContext();
+    
+    // Add event listeners to unlock audio
+    const unlockEvents = ['click', 'touchstart', 'touchend', 'mousedown', 'keydown'];
+    const unlockHandler = function(e) {
+        // Try to unlock audio
+        if (unlockAudioContext()) {
+            // If successfully unlocked, we can remove these event listeners
+            unlockEvents.forEach(eventType => {
+                document.removeEventListener(eventType, unlockHandler);
+            });
+        }
+    };
+    
+    // Add all event listeners
+    unlockEvents.forEach(eventType => {
+        document.addEventListener(eventType, unlockHandler);
+    });
+    
+    // After a delay, check if we need to show the prompt
+    setTimeout(() => {
+        const ac = getAudioContext();
+        if (ac && ac.state !== 'running' && !isAudioUnlocked) {
+            showAudioUnlockPrompt();
+        }
+    }, 1000);
+    
+    return true;
+}
+
+// Export functions needed by other scripts
+window.startAmbientMusic = startAmbientMusic;
+window.stopAmbientMusic = stopAmbientMusic;
+window.startProceduralSong = startProceduralSong;
+window.stopProceduralSong = stopProceduralSong;
+window.evolveSong = evolveSong;
+window.enterCutsceneAudioMode = enterCutsceneAudioMode;
+window.exitCutsceneAudioMode = exitCutsceneAudioMode;
+window.playCutsceneEffect = playCutsceneEffect;
+window.adjustAmbientForCutscene = adjustAmbientForCutscene;
+window.playEntityVoice = playEntityVoice;
+window.fadeOutGameMusic = fadeOutGameMusic;
+window.fadeInGameMusic = fadeInGameMusic;
+window.analyzeTextForAudio = analyzeTextForAudio;
+window.getAudioContext = getAudioContext;
+window.unlockAudioContext = unlockAudioContext;
+
+// Initialize audio system
+document.addEventListener('DOMContentLoaded', initAudio); 

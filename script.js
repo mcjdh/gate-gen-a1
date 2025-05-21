@@ -3,6 +3,10 @@ let energyPerClick = 2;
 let clickUpgradeLevel = 0;
 let clickUpgradeCost = 5;
 
+// Audio state tracking
+let ambientMusicStarted = false;
+let proceduralSongStarted = false;
+
 // Gameplay loop timing
 let lastTick = Date.now(); // Initialize lastTick
 
@@ -786,6 +790,11 @@ clickButton.addEventListener('click', () => {
     // Click animation
     clickButton.classList.add('clicked');
     setTimeout(() => clickButton.classList.remove('clicked'), 100); 
+
+    // Ensure audio is unlocked on first interaction
+    if (typeof unlockAudioContext === 'function') {
+        unlockAudioContext();
+    }
 
     // Start ambient music on first click if not already started
     if (!ambientMusicStarted && typeof startAmbientMusic === 'function') {
