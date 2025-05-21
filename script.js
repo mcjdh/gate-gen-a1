@@ -794,7 +794,7 @@ clickButton.addEventListener('click', () => {
     if (!proceduralSongStarted && typeof startProceduralSong === 'function') {
         startProceduralSong();
         proceduralSongStarted = true;
-        addLogMessage("Sound system initialized: Procedural melody online.", "system");
+        addLogMessage("Sound system initialized: Procedural melody online. (Mobile users: switch off silent mode to hear game audio.)", "system");
     }
 
     updateDisplays();
