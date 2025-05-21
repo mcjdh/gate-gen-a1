@@ -3,6 +3,9 @@ let energyPerClick = 2;
 let clickUpgradeLevel = 0;
 let clickUpgradeCost = 5;
 
+// Gameplay loop timing
+let lastTick = Date.now(); // Initialize lastTick
+
 // Raspberry Pi Stats
 let rpiOwned = 0;
 const RPI_BASE_COST = 20;
@@ -78,6 +81,8 @@ let gameWon = false; // Flag to track win state
 let shownMilestones = {}; // Object to track shown milestone messages
 let shownCutscenes = {}; // Object to track shown cutscene messages
 let isCutsceneActive = false; // Flag to prevent cutscene overlap
+let ambientMusicStarted = false; // Flag to ensure music starts only once
+let proceduralSongStarted = false; // Flag for procedural song
 
 // --- LOCALSTORAGE SAVE/LOAD ---
 const GAME_SAVE_KEY = 'gatewayGeneratorSave';
@@ -328,6 +333,12 @@ function loadGameState() {
         addLogMessage("Manual click enhancers active.", "system-event");
     }
     // The "System rebooted..." message for a fresh game is handled in the 'else' block above.
+
+    // Start ambient music on first interaction if not already started
+    if (!ambientMusicStarted && typeof startAmbientMusic === 'function') {
+        startAmbientMusic();
+        ambientMusicStarted = true;
+    }
 }
 
 const energyDisplay = document.getElementById('energyDisplay');
@@ -757,10 +768,26 @@ function updateDisplays() {
 }
 
 clickButton.addEventListener('click', () => {
-    const epsClickBonus = Math.floor(totalEps * 0.01); // 1% of totalEps
-    energy += (energyPerClick + epsClickBonus);
+    energy += energyPerClick;
+    // Click animation
+    clickButton.classList.add('clicked');
+    setTimeout(() => clickButton.classList.remove('clicked'), 100); 
+
+    // Start ambient music on first click if not already started
+    if (!ambientMusicStarted && typeof startAmbientMusic === 'function') {
+        startAmbientMusic();
+        ambientMusicStarted = true;
+    }
+
+    // Start procedural song on first click if not already started
+    if (!proceduralSongStarted && typeof startProceduralSong === 'function') {
+        startProceduralSong();
+        proceduralSongStarted = true;
+        addLogMessage("Sound system initialized: Procedural melody online.", "system");
+    }
+
     updateDisplays();
-    // No save on click for performance, autosave will handle it.
+    // checkMilestones(); // Milestones are checked in gameLoop
 });
 
 upgradeClickPowerButton.addEventListener('click', () => {
@@ -1069,9 +1096,44 @@ if (resetGameButton) {
 
 // Main Game Loop
 function gameLoop() {
-    energy += totalEps / 10; // Add a fraction of EPS 10 times per second for smoother display
+    const now = Date.now();
+    const deltaTime = (now - lastTick) / 1000; // seconds
+
+    // Generate energy from EPS sources
+    energy += totalEps * deltaTime;
+
+    // Check for win condition based on AI Core activation
+    if (aiCoreOwned > 0 && !gameWon) {
+        triggerWinCondition();
+    }
+    
+    // Check for progression-based cutscenes
+    if (!isCutsceneActive && !gameWon) { // Only check if no cutscene is active and game not won
+        checkProgressionCutscenes(); 
+    }
+
+    // Evolve procedural song based on totalEps (if song has started)
+    if (proceduralSongStarted && typeof evolveSong === 'function') {
+        // Define a scale factor or mapping for totalEps to a reasonable range for evolveSong
+        // For example, if evolveSong expects a scale of 0-10, and totalEps can go much higher:
+        let energyScaleForSong = Math.min(10, Math.log10(totalEps + 1)); // Example: log scale capped at 10
+        if (totalEps < 10) energyScaleForSong = 0; // ensure low start
+        else if (totalEps < 100) energyScaleForSong = 1;
+        else if (totalEps < 500) energyScaleForSong = 2;
+        else if (totalEps < 1000) energyScaleForSong = 3;
+        else if (totalEps < 5000) energyScaleForSong = 4;
+        else if (totalEps < 10000) energyScaleForSong = 5;
+        else if (totalEps < 50000) energyScaleForSong = 6;
+        else if (totalEps < 100000) energyScaleForSong = 7;
+        else if (totalEps < 500000) energyScaleForSong = 8;
+        else if (totalEps < 1000000) energyScaleForSong = 9;
+        else energyScaleForSong = 10;
+
+        evolveSong(energyScaleForSong);
+    }
+
     updateDisplays();
-    checkProgressionCutscenes(); // Check for progression cutscenes
+    lastTick = now;
 }
 
 // --- INITIALIZE GAME ---
