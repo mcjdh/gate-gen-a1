@@ -42,6 +42,14 @@ The game is designed for a full GATEWAY deployment & Core engagement in approxim
 - HTML5
 - CSS3
 - Vanilla JavaScript
+- Web Audio API
+
+## Browser Compatibility
+
+Gateway Protocol works across a variety of browsers, with specific considerations for audio:
+
+- **Desktop Browsers**: Audio functionality works automatically on most desktop browsers.
+- **Mobile Browsers**: Due to autoplay restrictions on mobile browsers (especially Safari on iOS), you'll need to tap the "Enable Audio" button when prompted to experience the full audio environment.
 
 ## Getting Started
 

@@ -810,3 +810,30 @@ body.dark-mode #energyDisplay {
     filter: grayscale(100%);
     display: inline-block; /* Needed for filter to apply consistently on some browsers */
 }
+
+/* Audio control styling */
+#audio-control-container {
+    margin: 10px 0;
+    text-align: center;
+}
+
+#enable-audio-button {
+    background-color: #2a4e93;
+    color: white;
+    padding: 8px 12px;
+    border: 1px solid #1a3e83;
+    border-radius: 4px;
+    cursor: pointer;
+    transition: background-color 0.2s;
+    font-size: 0.9em;
+}
+
+#enable-audio-button:hover {
+    background-color: #3a5ea3;
+}
+
+/* Audio button in dark mode */
+body.dark-mode #enable-audio-button {
+    background-color: #3e3e3e;
+    border-color: #555;
+}

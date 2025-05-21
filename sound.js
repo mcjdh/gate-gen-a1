@@ -6,11 +6,36 @@ let audioContext = null;
 let masterGain = null;
 let isPlaying = false;
 
+// Initialize and return audio context with mobile browser support
 function getAudioContext() {
     if (!audioContext) {
         audioContext = new (window.AudioContext || window.webkitAudioContext)();
     }
+    
+    // Ensure context is running (especially after user interaction)
+    if (audioContext && audioContext.state === 'suspended') {
+        audioContext.resume();
+    }
+    
     return audioContext;
+}
+
+// Initialize audio system with user interaction for mobile compatibility
+function initAudioWithUserInteraction() {
+    // Create contexts if they don't exist
+    const mainContext = getAudioContext();
+    
+    // For iOS Safari and other mobile browsers that require user interaction
+    if (mainContext && mainContext.state === 'suspended') {
+        mainContext.resume().then(() => {
+            console.log("Audio context resumed successfully");
+        }).catch(error => {
+            console.warn("Error resuming audio context:", error);
+        });
+    }
+    
+    // Return success status
+    return mainContext && (mainContext.state === 'running' || mainContext.state === 'suspended');
 }
 
 function startAmbientMusic() {
@@ -21,11 +46,30 @@ function startAmbientMusic() {
         return;
     }
 
-    // Ensure context is running (especially after user interaction)
+    // Ensure context is running - crucial for mobile browsers
     if (ac.state === 'suspended') {
-        ac.resume();
+        try {
+            // For mobile browsers - attempt to resume and catch errors
+            ac.resume().then(() => {
+                console.log("Audio context resumed successfully for ambient music");
+                // Continue with ambient music setup after successful resume
+                setupAmbientMusic(ac);
+            }).catch(err => {
+                console.warn("Error resuming audio context for ambient music:", err);
+            });
+        } catch (e) {
+            console.warn("Exception when trying to resume audio context:", e);
+        }
+    } else {
+        // Context is already running, proceed directly
+        setupAmbientMusic(ac);
     }
 
+    console.log("Ambient music initialized. Audio context state:", ac.state);
+}
+
+// Separated setup function to run after context is confirmed running
+function setupAmbientMusic(ac) {
     masterGain = ac.createGain();
     masterGain.gain.setValueAtTime(0.05, ac.currentTime); // Start with low volume
     masterGain.connect(ac.destination);
@@ -96,10 +140,41 @@ function stopAmbientMusic() {
     }, 550); // Ensure fade out completes
 }
 
+// Explicitly initialize audio system - important for mobile browsers
+// This should be called from a user interaction event (click, touch, etc.)
+function initializeAudio() {
+    let success = false;
+    
+    try {
+        // Create and resume audio context
+        const context = getAudioContext();
+        
+        if (context) {
+            // We have a context, attempt to resume it
+            if (context.state === 'suspended') {
+                context.resume().then(() => {
+                    console.log("Audio context resumed successfully on explicit initialization");
+                }).catch(error => {
+                    console.warn("Failed to resume audio context on initialization:", error);
+                });
+            }
+            
+            success = true;
+            console.log("Audio system initialized. Context state:", context.state);
+        } else {
+            console.warn("Could not create audio context during initialization");
+        }
+    } catch (e) {
+        console.error("Error during audio initialization:", e);
+    }
+    
+    return success;
+}
+
 // Example: Call startAmbientMusic() when appropriate, e.g., after a user interaction.
 // For instance, you might call this from your main script.js when the game loads or a specific event occurs.
 // Make sure to handle user interaction to start audio context if it's suspended.
-// document.body.addEventListener('click', () => startAmbientMusic(), { once: true }); 
+// document.body.addEventListener('click', () => startAmbientMusic(), { once: true });
 
 // --- Procedural 8-bit Song ---
 
@@ -248,10 +323,31 @@ function startProceduralSong() {
         console.warn("Web Audio API not supported for song.");
         return;
     }
+    
+    // Crucial for mobile browsers - ensure context is running
     if (songAudioContext.state === 'suspended') {
-        songAudioContext.resume();
+        try {
+            // For mobile browsers - attempt to resume and catch errors
+            songAudioContext.resume().then(() => {
+                console.log("Audio context resumed successfully for procedural song");
+                // Continue with song setup after successful resume
+                setupProceduralSong();
+            }).catch(err => {
+                console.warn("Error resuming audio context for procedural song:", err);
+            });
+        } catch (e) {
+            console.warn("Exception when trying to resume audio context:", e);
+        }
+    } else {
+        // Context is already running, proceed directly
+        setupProceduralSong();
     }
+    
+    console.log("Procedural song initialized. Audio context state:", songAudioContext.state);
+}
 
+// Separated setup function to run after context is confirmed running
+function setupProceduralSong() {
     songMasterGain = songAudioContext.createGain();
     songMasterGain.gain.setValueAtTime(0.08, songAudioContext.currentTime); 
     songMasterGain.connect(songAudioContext.destination);

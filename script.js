@@ -83,6 +83,7 @@ let shownCutscenes = {}; // Object to track shown cutscene messages
 let isCutsceneActive = false; // Flag to prevent cutscene overlap
 let ambientMusicStarted = false; // Flag to ensure music starts only once
 let proceduralSongStarted = false; // Flag for procedural song
+let audioInitialized = false; // Flag to track if audio has been properly initialized
 
 // Energy history for ASCII graph
 let energyHistory = [];
@@ -789,15 +790,19 @@ clickButton.addEventListener('click', () => {
 
     // Start ambient music on first click if not already started
     if (!ambientMusicStarted && typeof startAmbientMusic === 'function') {
-        startAmbientMusic();
-        ambientMusicStarted = true;
+        if (audioInitialized) {
+            startAmbientMusic();
+            ambientMusicStarted = true;
+        }
     }
 
     // Start procedural song on first click if not already started
     if (!proceduralSongStarted && typeof startProceduralSong === 'function') {
-        startProceduralSong();
-        proceduralSongStarted = true;
-        addLogMessage("Sound system initialized: Procedural melody online.", "system");
+        if (audioInitialized) {
+            startProceduralSong();
+            proceduralSongStarted = true;
+            addLogMessage("Sound system initialized: Procedural melody online.", "system");
+        }
     }
 
     updateDisplays();
@@ -1328,7 +1333,62 @@ function gameLoop() {
     lastTick = now;
 }
 
+// Function to detect if we're on a mobile browser
+function isMobileBrowser() {
+    return /Android|webOS|iPhone|iPad|iPod|BlackBerry|IEMobile|Opera Mini/i.test(navigator.userAgent);
+}
+
 // --- INITIALIZE GAME ---
+
+// Setup audio initialization for mobile browsers
+const enableAudioButton = document.getElementById('enable-audio-button');
+const audioControlContainer = document.getElementById('audio-control-container');
+
+// Handle mobile browser audio initialization
+const initializeGameAudio = () => {
+    // Try to initialize audio system
+    if (typeof initializeAudio === 'function') {
+        const initialized = initializeAudio();
+        if (initialized) {
+            audioInitialized = true;
+            
+            // Start audio if appropriate
+            if (!ambientMusicStarted && typeof startAmbientMusic === 'function') {
+                startAmbientMusic();
+                ambientMusicStarted = true;
+            }
+            
+            if (!proceduralSongStarted && typeof startProceduralSong === 'function') {
+                startProceduralSong();
+                proceduralSongStarted = true;
+                addLogMessage("Sound system initialized: Procedural melody online.", "system");
+            }
+            
+            // Hide the button after successful initialization
+            if (audioControlContainer) {
+                audioControlContainer.style.display = 'none';
+            }
+        } else {
+            console.warn("Audio initialization failed");
+        }
+    }
+};
+
+// Set up the audio enable button
+if (enableAudioButton) {
+    enableAudioButton.addEventListener('click', (e) => {
+        e.preventDefault();
+        initializeGameAudio();
+    });
+    
+    // Auto-hide on desktop browsers where audio usually works without special handling
+    if (!isMobileBrowser()) {
+        audioControlContainer.style.display = 'none';
+        // Desktop browsers can initialize audio directly
+        audioInitialized = true;
+    }
+}
+
 loadGameState(); // Load game state first
 calculateAllEps(); // Then calculate EPS based on loaded values
 updateDisplays(); // Then update all displays
