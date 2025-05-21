@@ -663,6 +663,28 @@ function playCutsceneEffect(effectType, timing = 'start') {
     const ac = getAudioContext();
     if (!ac) return;
     
+    // Critical for mobile browsers - ensure context is running before playing
+    if (ac.state === 'suspended') {
+        try {
+            ac.resume().then(() => {
+                console.log("Audio context resumed for cutscene effect");
+                // Only proceed with effect creation if resume was successful
+                createCutsceneEffect(ac, effectType, timing);
+            }).catch(error => {
+                console.warn("Error resuming audio context for cutscene effect:", error);
+            });
+        } catch (e) {
+            console.warn("Exception when trying to resume audio context for cutscene effect:", e);
+            return; // Exit early if there's an error
+        }
+    } else {
+        // Context is already running, create the effect directly
+        createCutsceneEffect(ac, effectType, timing);
+    }
+}
+
+// Separated function to create actual cutscene effects after context is running
+function createCutsceneEffect(ac, effectType, timing) {
     switch(effectType) {
         case 'revelation':
             // A dramatic revelation sound
@@ -809,6 +831,28 @@ function playEntityVoice(entity, messageLength) {
     const ac = getAudioContext();
     if (!ac) return;
     
+    // Critical for mobile browsers - ensure context is running before playing
+    if (ac.state === 'suspended') {
+        try {
+            ac.resume().then(() => {
+                console.log("Audio context resumed for entity voice");
+                // Only proceed with voice creation if resume was successful
+                createEntityVoice(ac, entity, messageLength);
+            }).catch(error => {
+                console.warn("Error resuming audio context for entity voice:", error);
+            });
+        } catch (e) {
+            console.warn("Exception when trying to resume audio context for entity voice:", e);
+            return; // Exit early if there's an error
+        }
+    } else {
+        // Context is already running, create the voice directly
+        createEntityVoice(ac, entity, messageLength);
+    }
+}
+
+// Separated function to create actual voice sounds after context is running
+function createEntityVoice(ac, entity, messageLength) {
     const voiceGain = ac.createGain();
     voiceGain.gain.setValueAtTime(0.03, ac.currentTime);
     voiceGain.connect(ac.destination);
@@ -945,6 +989,7 @@ function playEntityVoice(entity, messageLength) {
             voiceOsc.stop(ac.currentTime + 3.1);
             break;
     }
+}
 }
 
 // Utility functions for smooth transitions
