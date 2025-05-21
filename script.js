@@ -349,10 +349,7 @@ function loadGameState() {
     // The "System rebooted..." message for a fresh game is handled in the 'else' block above.
 
     // Start ambient music on first interaction if not already started
-    if (!ambientMusicStarted && typeof startAmbientMusic === 'function') {
-        startAmbientMusic();
-        ambientMusicStarted = true;
-    }
+    // Removed a call to startAmbientMusic() here because it should be tied to user interaction
 }
 
 const energyDisplay = document.getElementById('energyDisplay');
