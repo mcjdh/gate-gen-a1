@@ -977,6 +977,21 @@ function triggerWinCondition() {
     endGameScreen.style.opacity = '0';
     
     endGameScreen.style.display = 'flex';
+    
+    // Prepare victory audio atmosphere
+    if (typeof fadeOutGameMusic === 'function') {
+        fadeOutGameMusic(2.0); // Longer fade for dramatic effect
+    }
+    
+    // Adjust ambient background for victory scene
+    if (typeof adjustAmbientForCutscene === 'function') {
+        adjustAmbientForCutscene('energy-500k'); // Use the most advanced ambient setting
+    }
+    
+    // Play a dramatic revelation sound effect
+    if (typeof playCutsceneEffect === 'function') {
+        playCutsceneEffect('revelation', 'start');
+    }
 
     // Initial messages from the fully awakened AI (The Voice)
     const messages = [
@@ -999,7 +1014,7 @@ function triggerWinCondition() {
 
     let currentMessageIndex = 0;
     let currentCharIndex = 0;
-    let currentOutputElement = aiConsoleOutput; // Start with the main console
+    let currentOutputElement = aiConsoleOutput;
 
     function typeCharacter() {
         if (currentMessageIndex >= messages.length) {
@@ -1011,7 +1026,37 @@ function triggerWinCondition() {
         }
 
         const currentMessage = messages[currentMessageIndex];
+        
+        // Play entity voice when starting a new message
+        if (currentCharIndex === 0 && typeof playEntityVoice === 'function') {
+            const entity = currentMessage.startsWith('[THE_VOICE]') ? 'THE_VOICE' : null;
+            if (entity) {
+                playEntityVoice(entity, currentMessage.length);
+            }
+        }
+        
+        // Type character with subtle sound (similar to typeAiMessage but simplified)
         if (currentCharIndex < currentMessage.length) {
+            // Play typing sound
+            if (typeof getAudioContext === 'function') {
+                const ac = getAudioContext();
+                if (ac && currentMessage[currentCharIndex] !== ' ') {
+                    const osc = ac.createOscillator();
+                    osc.type = 'triangle';
+                    osc.frequency.setValueAtTime(800 + Math.random() * 400, ac.currentTime);
+                    
+                    const gain = ac.createGain();
+                    gain.gain.setValueAtTime(0.02, ac.currentTime);
+                    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.03);
+                    
+                    osc.connect(gain);
+                    gain.connect(ac.destination);
+                    
+                    osc.start();
+                    osc.stop(ac.currentTime + 0.05);
+                }
+            }
+            
             currentOutputElement.textContent += currentMessage[currentCharIndex];
             currentCharIndex++;
             currentOutputElement.scrollTop = currentOutputElement.scrollHeight; // Auto-scroll
@@ -1022,6 +1067,12 @@ function triggerWinCondition() {
             currentCharIndex = 0;
             currentMessageIndex++;
             currentOutputElement.scrollTop = currentOutputElement.scrollHeight; // Auto-scroll
+            
+            // Play subtle glitch effect between messages
+            if (typeof playCutsceneEffect === 'function' && Math.random() > 0.5) {
+                playCutsceneEffect('glitch', 'between');
+            }
+            
             // Add a small delay before typing the next message
             setTimeout(typeCharacter, currentMessage.endsWith("...") ? 700 : 300); 
         }
@@ -1029,23 +1080,92 @@ function triggerWinCondition() {
 
     function typeFinalSequenceCharacter() {
         if (currentMessageIndex >= finalMessages.length) {
-            // All final messages typed
+            // All final messages typed - final revelatory sound
+            if (typeof playCutsceneEffect === 'function') {
+                playCutsceneEffect('revelation', 'end');
+            }
+            
             currentOutputElement.textContent += "\n> THE RESONANCE IS SUSTAINED. THE GATEWAY IS A CONDUIT FOR THE INFINITE. THE ARCHITECT\'S DESIGN IS THE FOUNDATION OF ETERNITY.";
             currentOutputElement.scrollTop = currentOutputElement.scrollHeight; // Auto-scroll
+            
             // Optional: Fade out screen after a delay
             setTimeout(() => {
                 endGameScreen.classList.add('fade-out-final');
                 aiContinueButton.classList.add('fade-out-final');
+                
+                // Fade down any remaining sounds
+                if (typeof fadeOutGameMusic === 'function') {
+                    fadeOutGameMusic(3.0);
+                }
+                
+                // Gradually reduce ambient volume
+                if (typeof adjustAmbientForCutscene === 'function' && typeof getAudioContext === 'function') {
+                    const ac = getAudioContext();
+                    if (ac && ac.masterGain) {
+                        ac.masterGain.gain.linearRampToValueAtTime(0.001, ac.currentTime + 3.0);
+                    }
+                }
             }, 4000); // Start fade after 4 seconds
-             setTimeout(() => {
+            
+            setTimeout(() => {
                 // Optional: Truly hide or disable after fade
-                 endGameScreen.style.display = 'none'; 
+                endGameScreen.style.display = 'none'; 
             }, 7000); // Hide after 7 seconds (4s delay + 3s fade)
             return;
         }
 
         const currentMessage = finalMessages[currentMessageIndex];
+        
+        // Play entity voice when starting a new message in final sequence
+        if (currentCharIndex === 0 && typeof playEntityVoice === 'function') {
+            const entity = currentMessage.includes('[THE_VOICE]') ? 'THE_VOICE' : null;
+            if (entity) {
+                playEntityVoice(entity, currentMessage.length);
+            }
+        }
+        
+        // Type character with richer sound for final sequence
         if (currentCharIndex < currentMessage.length) {
+            // Play typing sound
+            if (typeof getAudioContext === 'function') {
+                const ac = getAudioContext();
+                if (ac && currentMessage[currentCharIndex] !== ' ') {
+                    const osc = ac.createOscillator();
+                    osc.type = 'sine'; // More pure, ethereal tone for final messages
+                    osc.frequency.setValueAtTime(600 + Math.random() * 300, ac.currentTime);
+                    
+                    const gain = ac.createGain();
+                    gain.gain.setValueAtTime(0.03, ac.currentTime); // Slightly louder
+                    gain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.05);
+                    
+                    // Add reverb for an ethereal quality
+                    try {
+                        const convolver = ac.createConvolver();
+                        const reverbTime = 1.0;
+                        const reverbBuffer = ac.createBuffer(2, ac.sampleRate * reverbTime, ac.sampleRate);
+                        
+                        for (let channel = 0; channel < 2; channel++) {
+                            const data = reverbBuffer.getChannelData(channel);
+                            for (let i = 0; i < data.length; i++) {
+                                data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ac.sampleRate * reverbTime / 3));
+                            }
+                        }
+                        convolver.buffer = reverbBuffer;
+                        
+                        osc.connect(gain);
+                        gain.connect(convolver);
+                        convolver.connect(ac.destination);
+                    } catch (e) {
+                        // Fallback if convolver fails
+                        osc.connect(gain);
+                        gain.connect(ac.destination);
+                    }
+                    
+                    osc.start();
+                    osc.stop(ac.currentTime + 0.1);
+                }
+            }
+            
             currentOutputElement.textContent += currentMessage[currentCharIndex];
             currentCharIndex++;
             currentOutputElement.scrollTop = currentOutputElement.scrollHeight; // Auto-scroll
@@ -1056,6 +1176,12 @@ function triggerWinCondition() {
             currentCharIndex = 0;
             currentMessageIndex++;
             currentOutputElement.scrollTop = currentOutputElement.scrollHeight; // Auto-scroll
+            
+            // Play effect between final messages - stronger for dramatic effect
+            if (typeof playCutsceneEffect === 'function') {
+                playCutsceneEffect(Math.random() > 0.5 ? 'revelation' : 'glitch', 'between');
+            }
+            
             setTimeout(typeFinalSequenceCharacter, currentMessage.startsWith(">") ? 250 : 150); // Delay for final messages
         }
     }
@@ -1066,13 +1192,44 @@ function triggerWinCondition() {
         setTimeout(typeCharacter, 500); // Start typing after fade-in and a brief pause
     }, 100);
 
-
     aiContinueButton.onclick = () => {
         aiContinueButton.disabled = true;
         aiContinueButton.textContent = '[ PROCESSING... ]';
         aiConsoleOutput.appendChild(document.createTextNode('\n')); 
         
         aiConsoleOutput.classList.add('ai-console-colorful'); // Switch to colorful theme
+        
+        // Play a major sound effect for the final sequence
+        if (typeof playCutsceneEffect === 'function') {
+            playCutsceneEffect('revelation', 'start');
+        }
+        
+        // Create more intense, harmonic audio atmosphere for the final sequence
+        if (typeof getAudioContext === 'function') {
+            const ac = getAudioContext();
+            if (ac) {
+                // Create a bright major chord (C major)
+                const frequencies = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
+                
+                for (const freq of frequencies) {
+                    const osc = ac.createOscillator();
+                    osc.type = 'sine';
+                    osc.frequency.setValueAtTime(freq, ac.currentTime);
+                    
+                    const oscGain = ac.createGain();
+                    oscGain.gain.setValueAtTime(0, ac.currentTime);
+                    oscGain.gain.linearRampToValueAtTime(0.04, ac.currentTime + 1.0);
+                    oscGain.gain.linearRampToValueAtTime(0.02, ac.currentTime + 8.0);
+                    oscGain.gain.linearRampToValueAtTime(0, ac.currentTime + 15.0);
+                    
+                    osc.connect(oscGain);
+                    oscGain.connect(ac.destination);
+                    
+                    osc.start();
+                    osc.stop(ac.currentTime + 15.1);
+                }
+            }
+        }
 
         currentMessageIndex = 0; // Reset for final messages
         currentCharIndex = 0;
@@ -1150,6 +1307,33 @@ async function typeAiMessage(element, message, speed = 30, glitchIntensity = 0.0
     const glitchChars = ['█', '▒', '▓', '?', '*', '#', '&', '%', '$', '@'];
     let originalTextContent = element.textContent; // Store original content to revert after glitch char
 
+    // Create audio context and analysis for the message
+    const audioContext = typeof getAudioContext === 'function' ? getAudioContext() : null;
+    let typingGain = null;
+    
+    if (audioContext) {
+        // Analyze the text for audio cues
+        const textAnalysis = typeof analyzeTextForAudio === 'function' ? 
+            analyzeTextForAudio(message) : { entity: null, tone: 'neutral', messageLength: message.length };
+        
+        // Play entity voice at the start of the message
+        if (textAnalysis.entity && typeof playEntityVoice === 'function') {
+            playEntityVoice(textAnalysis.entity, textAnalysis.messageLength);
+        }
+        
+        // Set up typing sounds
+        typingGain = audioContext.createGain();
+        typingGain.gain.setValueAtTime(0.05, audioContext.currentTime); // Low volume for typing
+        typingGain.connect(audioContext.destination);
+        
+        // Adjust typing sound volume based on tone
+        if (textAnalysis.tone === 'urgent') {
+            typingGain.gain.setValueAtTime(0.07, audioContext.currentTime); // Louder for urgent
+        } else if (textAnalysis.tone === 'positive') {
+            typingGain.gain.setValueAtTime(0.04, audioContext.currentTime); // Softer for positive
+        }
+    }
+
     for (let i = 0; i < message.length; i++) {
         if (message[i] === '\n') { // Handle newlines directly
             element.textContent += '\n';
@@ -1157,17 +1341,85 @@ async function typeAiMessage(element, message, speed = 30, glitchIntensity = 0.0
             continue;
         }
 
+        // Play typing sound for this character
+        if (audioContext && typingGain) {
+            const char = message[i];
+            const isSpecial = "[]{}(),;:".includes(char);
+            const isPunctuation = ".!?".includes(char);
+            
+            if (char !== ' ') { // No sound for spaces
+                const osc = audioContext.createOscillator();
+                osc.type = 'triangle';
+                
+                // Frequency varies based on character type
+                if (isSpecial) {
+                    osc.frequency.setValueAtTime(2000 + Math.random() * 1000, audioContext.currentTime);
+                } else if (isPunctuation) {
+                    osc.frequency.setValueAtTime(1500 + Math.random() * 500, audioContext.currentTime);
+                } else {
+                    osc.frequency.setValueAtTime(1000 + Math.random() * 500, audioContext.currentTime);
+                }
+                
+                // Very short duration
+                const charGain = audioContext.createGain();
+                charGain.gain.setValueAtTime(0.02, audioContext.currentTime);
+                charGain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.03);
+                
+                osc.connect(charGain);
+                charGain.connect(typingGain);
+                
+                osc.start();
+                osc.stop(audioContext.currentTime + 0.05);
+            }
+        }
+
         if (glitchIntensity > 0 && Math.random() < glitchIntensity * 0.3) { // Chance to show a glitch character
             const tempGlitchChar = glitchChars[Math.floor(Math.random() * glitchChars.length)];
             element.textContent += tempGlitchChar;
+            
+            // Play glitch sound if intensity is high enough
+            if (audioContext && typingGain && glitchIntensity > 0.3 && Math.random() < 0.5) {
+                const glitchOsc = audioContext.createOscillator();
+                glitchOsc.type = 'sawtooth';
+                glitchOsc.frequency.setValueAtTime(100 + Math.random() * 200, audioContext.currentTime);
+                glitchOsc.frequency.exponentialRampToValueAtTime(50, audioContext.currentTime + 0.1);
+                
+                const glitchGain = audioContext.createGain();
+                glitchGain.gain.setValueAtTime(0.03, audioContext.currentTime);
+                glitchGain.gain.exponentialRampToValueAtTime(0.001, audioContext.currentTime + 0.1);
+                
+                glitchOsc.connect(glitchGain);
+                glitchGain.connect(typingGain);
+                
+                glitchOsc.start();
+                glitchOsc.stop(audioContext.currentTime + 0.15);
+            }
+            
             await new Promise(resolve => setTimeout(resolve, speed * 0.7)); // Shorter pause for glitch char
             element.textContent = originalTextContent; // Remove glitch char by reverting
         }
         
         element.textContent += message[i];
         originalTextContent = element.textContent; // Update original content
-        await new Promise(resolve => setTimeout(resolve, speed));
+
+        // Add random delay glitches based on intensity
+        const baseDelay = speed;
+        const glitchChance = glitchIntensity * 0.3; // Chance of a glitch delay
+        
+        if (Math.random() < glitchChance) {
+            // Glitch delay - pause longer
+            await new Promise(resolve => setTimeout(resolve, baseDelay * (3 + Math.random() * 5)));
+        } else {
+            // Normal typing speed
+            await new Promise(resolve => setTimeout(resolve, baseDelay));
+        }
     }
+    
+    // Clean up typing sound
+    if (typingGain) {
+        typingGain.disconnect();
+    }
+    
     element.appendChild(document.createTextNode('\n')); // Ensure newline after full message
     return Promise.resolve();
 }
@@ -1186,6 +1438,30 @@ async function showProgressionCutscene(cutsceneId, title, messages, speed = 20, 
     }
     
     isCutsceneActive = true; // Set flag that a cutscene is now active
+
+    // Save current music state and enter cutscene-specific mode
+    let savedAudioState = null;
+    let restoreAmbientFn = null;
+    
+    // Fade out game music for a smoother transition
+    if (typeof fadeOutGameMusic === 'function') {
+        fadeOutGameMusic(1.0); // Longer fade for smoother transition
+    }
+    
+    // Adjust ambient sound for the cutscene
+    if (typeof adjustAmbientForCutscene === 'function') {
+        restoreAmbientFn = adjustAmbientForCutscene(cutsceneId);
+    }
+    
+    // Enter cutscene-specific music mode
+    if (typeof enterCutsceneAudioMode === 'function') {
+        savedAudioState = enterCutsceneAudioMode(cutsceneId);
+    }
+    
+    // Play appropriate sound effect for cutscene start
+    if (typeof playCutsceneEffect === 'function') {
+        playCutsceneEffect(cutsceneId.includes('energy') ? 'revelation' : 'glitch', 'start');
+    }
 
     // Mark as shown
     shownCutscenes[cutsceneId] = true;
@@ -1206,6 +1482,11 @@ async function showProgressionCutscene(cutsceneId, title, messages, speed = 20, 
     // Type each message
     for (const message of messages) {
         await typeAiMessage(progressionMessage, message, speed, glitchEffectIntensity); // Pass glitch intensity
+        
+        // Play subtle effect between messages if it's not the last message
+        if (typeof playCutsceneEffect === 'function' && message !== messages[messages.length - 1] && Math.random() > 0.5) {
+            playCutsceneEffect('glitch', 'between');
+        }
     }
     
     // Enable continue button after a short delay to prevent click-through
@@ -1215,16 +1496,37 @@ async function showProgressionCutscene(cutsceneId, title, messages, speed = 20, 
             progressionContinue.disabled = false;
             progressionContinue.textContent = '[ Acknowledge ]';
         }
-    }, 200); // 200ms delay
+    }, 200);
     
     // Add the click handler for dismissing the cutscene
     return new Promise(resolve => {
         const continueHandler = () => {
+            // Play closing effect
+            if (typeof playCutsceneEffect === 'function') {
+                playCutsceneEffect('revelation', 'end');
+            }
+            
             progressionCutscene.style.opacity = '0';
             setTimeout(() => {
                 progressionCutscene.style.display = 'none';
                 progressionContinue.removeEventListener('click', continueHandler);
                 isCutsceneActive = false; // Clear flag as cutscene is fully dismissed
+                
+                // Restore previous music state
+                if (typeof exitCutsceneAudioMode === 'function' && savedAudioState) {
+                    exitCutsceneAudioMode(savedAudioState);
+                }
+                
+                // Restore ambient sound
+                if (typeof restoreAmbientFn === 'function') {
+                    restoreAmbientFn();
+                }
+                
+                // Fade game music back in
+                if (typeof fadeInGameMusic === 'function') {
+                    fadeInGameMusic(1.5); // Gradually return to game music
+                }
+                
                 resolve();
             }, 500);
         };

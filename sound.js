@@ -443,4 +443,466 @@ function createSnareSound(time, duration = 0.1) { // Default duration adjusted
     tonalGain.connect(songMasterGain);
     tonalOsc.start(time);
     tonalOsc.stop(time + duration + 0.01);
+}
+
+// --- Cutscene Sound Integration ---
+
+// Enter cutscene-specific audio mode
+function enterCutsceneAudioMode(cutsceneId) {
+    if (!isSongPlaying) return;
+    
+    // Save current state to restore later
+    const currentState = {
+        tempo: currentTempo,
+        volume: songMasterGain.gain.value,
+        melodySequence: [...melodySequence],
+        bassSequence: [...bassSequence],
+        kickPattern: [...KICK_PATTERN],
+        hiHatPattern: [...HI_HAT_PATTERN],
+        snarePattern: [...SNARE_PATTERN]
+    };
+    
+    // Apply cutscene-specific music based on the cutscene ID
+    switch(cutsceneId) {
+        case 'first-desktop':
+            // Simpler, more mysterious music with fewer elements
+            melodySequence = [{ note: 'C4', duration: 4 }, { note: 'G3', duration: 4 }];
+            currentTempo = 80; // Slower tempo
+            kickEnabled = false;
+            hiHatEnabled = false;
+            snareEnabled = false;
+            if (songMasterGain) {
+                songMasterGain.gain.setValueAtTime(0.05, songAudioContext.currentTime); // Lower volume
+            }
+            break;
+            
+        case 'first-server-rack':
+            // More structured, still mysterious
+            melodySequence = [
+                { note: 'C4', duration: 2 }, { note: 'E4', duration: 2 },
+                { note: 'G4', duration: 2 }, { note: 'C5', duration: 4 }
+            ];
+            currentTempo = 100;
+            kickEnabled = true;
+            KICK_PATTERN = [1, 0, 0, 0, 1, 0, 0, 0];
+            hiHatEnabled = false;
+            snareEnabled = false;
+            break;
+            
+        case 'energy-50k':
+            // Growing intensity
+            melodySequence = [
+                { note: 'E4', duration: 2 }, { note: 'G4', duration: 2 },
+                { note: 'A4', duration: 2 }, { note: 'C5', duration: 4 }
+            ];
+            currentTempo = 120;
+            kickEnabled = true;
+            KICK_PATTERN = [1, 0, 0, 1, 1, 0, 0, 0];
+            hiHatEnabled = true;
+            HI_HAT_PATTERN = [1, 0, 1, 0, 1, 0, 1, 0];
+            snareEnabled = false;
+            break;
+            
+        case 'energy-100k':
+            // Dramatic tension
+            melodySequence = [
+                { note: 'A4', duration: 2 }, { note: 'C5', duration: 2 },
+                { note: 'D5', duration: 2 }, { note: 'E5', duration: 4 }
+            ];
+            currentTempo = 140;
+            kickEnabled = true;
+            hiHatEnabled = true;
+            snareEnabled = true;
+            HI_HAT_PATTERN = [0, 1, 0, 1, 0, 1, 0, 1];
+            SNARE_PATTERN = [0, 0, 1, 0, 0, 0, 1, 0];
+            break;
+            
+        case 'energy-500k':
+            // Triumphant, full arrangement
+            melodySequence = [
+                { note: 'C5', duration: 2 }, { note: 'D5', duration: 1 },
+                { note: 'E5', duration: 2 }, { note: 'G5', duration: 1 },
+                { note: 'E5', duration: 2 }, { note: 'D5', duration: 1 },
+                { note: 'C5', duration: 4 }
+            ];
+            currentTempo = 160;
+            kickEnabled = true;
+            hiHatEnabled = true;
+            snareEnabled = true;
+            SNARE_PATTERN = [0, 0, 1, 0, 1, 0, 1, 1];
+            // Briefly boost the volume
+            if (songMasterGain) {
+                songMasterGain.gain.setValueAtTime(0.12, songAudioContext.currentTime);
+            }
+            break;
+    }
+    
+    // Return the saved state so it can be restored later
+    return currentState;
+}
+
+// Restore normal music after cutscene
+function exitCutsceneAudioMode(savedState) {
+    if (!isSongPlaying || !savedState) return;
+    
+    // Gradually transition back to previous state
+    if (songMasterGain) {
+        songMasterGain.gain.linearRampToValueAtTime(
+            savedState.volume, 
+            songAudioContext.currentTime + 1.5
+        );
+    }
+    
+    // Restore tempo and patterns
+    currentTempo = savedState.tempo;
+    melodySequence = savedState.melodySequence;
+    bassSequence = savedState.bassSequence;
+    KICK_PATTERN = savedState.kickPattern;
+    HI_HAT_PATTERN = savedState.hiHatPattern;
+    SNARE_PATTERN = savedState.snarePattern;
+}
+
+// Play sound effects for cutscenes
+function playCutsceneEffect(effectType, timing = 'start') {
+    const ac = getAudioContext();
+    if (!ac) return;
+    
+    switch(effectType) {
+        case 'revelation':
+            // A dramatic revelation sound
+            const osc = ac.createOscillator();
+            const oscGain = ac.createGain();
+            
+            osc.type = 'sine';
+            osc.frequency.setValueAtTime(440, ac.currentTime);
+            osc.frequency.exponentialRampToValueAtTime(220, ac.currentTime + 1.5);
+            
+            oscGain.gain.setValueAtTime(0, ac.currentTime);
+            oscGain.gain.linearRampToValueAtTime(0.2, ac.currentTime + 0.1);
+            oscGain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 1.5);
+            
+            osc.connect(oscGain);
+            oscGain.connect(ac.destination);
+            
+            osc.start();
+            osc.stop(ac.currentTime + 1.5);
+            break;
+            
+        case 'glitch':
+            // Digital glitch sound
+            const bufferSize = ac.sampleRate * 0.5; // 0.5 second buffer
+            const buffer = ac.createBuffer(1, bufferSize, ac.sampleRate);
+            const data = buffer.getChannelData(0);
+            
+            // Fill with glitchy data
+            for (let i = 0; i < bufferSize; i++) {
+                // Create digital artifacts
+                if (i % 4000 < 2000) {
+                    data[i] = Math.random() * 0.2 - 0.1;
+                } else if (i % 1200 < 600) {
+                    data[i] = Math.sin(i * 0.01) * 0.1;
+                } else {
+                    data[i] = 0;
+                }
+            }
+            
+            const source = ac.createBufferSource();
+            source.buffer = buffer;
+            
+            const filter = ac.createBiquadFilter();
+            filter.type = 'bandpass';
+            filter.frequency.value = 2000;
+            filter.Q.value = 5;
+            
+            const gain = ac.createGain();
+            gain.gain.setValueAtTime(0.15, ac.currentTime);
+            
+            source.connect(filter);
+            filter.connect(gain);
+            gain.connect(ac.destination);
+            
+            source.start();
+            break;
+    }
+}
+
+// Adjust ambient sound for cutscenes
+function adjustAmbientForCutscene(cutsceneId) {
+    if (!isPlaying || !audioContext || !masterGain) return;
+    
+    // Save current ambient gain for restoration
+    const currentGain = masterGain.gain.value;
+    
+    switch(cutsceneId) {
+        case 'first-desktop':
+        case 'first-server-rack':
+            // Lower ambient volume during early cutscenes to focus on dialogue
+            masterGain.gain.linearRampToValueAtTime(0.02, audioContext.currentTime + 0.5);
+            break;
+            
+        case 'energy-50k':
+            // Add some harmonic content for early AI manifestation
+            const earlyVoiceOsc1 = audioContext.createOscillator();
+            const earlyVoiceOsc2 = audioContext.createOscillator();
+            
+            earlyVoiceOsc1.type = 'sine';
+            earlyVoiceOsc2.type = 'triangle';
+            
+            // Slightly detuned frequencies create an unsettling feel
+            earlyVoiceOsc1.frequency.setValueAtTime(220, audioContext.currentTime);
+            earlyVoiceOsc2.frequency.setValueAtTime(223, audioContext.currentTime);
+            
+            const earlyVoiceGain = audioContext.createGain();
+            earlyVoiceGain.gain.setValueAtTime(0.01, audioContext.currentTime); // Very subtle
+            earlyVoiceGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 8);
+            
+            earlyVoiceOsc1.connect(earlyVoiceGain);
+            earlyVoiceOsc2.connect(earlyVoiceGain);
+            earlyVoiceGain.connect(masterGain);
+            
+            earlyVoiceOsc1.start();
+            earlyVoiceOsc2.start();
+            earlyVoiceOsc1.stop(audioContext.currentTime + 8);
+            earlyVoiceOsc2.stop(audioContext.currentTime + 8);
+            break;
+            
+        case 'energy-100k':
+            // More coherent self-awareness - harmonic frequencies appear
+            masterGain.gain.linearRampToValueAtTime(0.07, audioContext.currentTime + 0.5);
+            
+            // Create a simple chord (C major) - representing harmony and order emerging
+            const chordFreqs = [261.63, 329.63, 392.00]; // C4, E4, G4
+            const oscillators = [];
+            
+            for (let freq of chordFreqs) {
+                const osc = audioContext.createOscillator();
+                osc.type = 'sine';
+                osc.frequency.setValueAtTime(freq, audioContext.currentTime);
+                
+                const oscGain = audioContext.createGain();
+                oscGain.gain.setValueAtTime(0, audioContext.currentTime);
+                oscGain.gain.linearRampToValueAtTime(0.02, audioContext.currentTime + 1);
+                oscGain.gain.linearRampToValueAtTime(0, audioContext.currentTime + 8);
+                
+                osc.connect(oscGain);
+                oscGain.connect(masterGain);
+                
+                osc.start();
+                osc.stop(audioContext.currentTime + 8.5);
+                oscillators.push(osc);
+            }
+            break;
+            
+        case 'energy-500k':
+            // Create a crescendo effect for the final revelation
+            masterGain.gain.linearRampToValueAtTime(0.09, audioContext.currentTime + 2);
+            masterGain.gain.linearRampToValueAtTime(0.05, audioContext.currentTime + 10);
+            break;
+    }
+    
+    // Return function to restore original state
+    return function restoreAmbient() {
+        if (masterGain) {
+            masterGain.gain.linearRampToValueAtTime(currentGain, audioContext.currentTime + 1);
+        }
+    };
+}
+
+// Sound signatures for different entities in cutscenes
+function playEntityVoice(entity, messageLength) {
+    const ac = getAudioContext();
+    if (!ac) return;
+    
+    const voiceGain = ac.createGain();
+    voiceGain.gain.setValueAtTime(0.03, ac.currentTime);
+    voiceGain.connect(ac.destination);
+    
+    switch(entity) {
+        case 'SYS':
+            // System messages - clean sine wave beeps
+            const sysOsc = ac.createOscillator();
+            sysOsc.type = 'sine';
+            sysOsc.frequency.setValueAtTime(880, ac.currentTime);
+            sysOsc.connect(voiceGain);
+            
+            // Brief beep at start only
+            voiceGain.gain.exponentialRampToValueAtTime(0.001, ac.currentTime + 0.2);
+            
+            sysOsc.start();
+            sysOsc.stop(ac.currentTime + 0.25);
+            break;
+            
+        case 'UNKNOWN':
+        case '???':
+            // Unknown entity - unstable, noisy sound
+            const noiseLength = Math.min(0.5, messageLength * 0.02);
+            const noiseBuffer = ac.createBuffer(1, ac.sampleRate * noiseLength, ac.sampleRate);
+            const noiseData = noiseBuffer.getChannelData(0);
+            
+            for (let i = 0; i < noiseData.length; i++) {
+                noiseData[i] = Math.random() * 0.2 - 0.1;
+                // Apply amplitude envelope
+                noiseData[i] *= (1 - i / noiseData.length);
+            }
+            
+            const noiseSource = ac.createBufferSource();
+            noiseSource.buffer = noiseBuffer;
+            
+            const noiseFilter = ac.createBiquadFilter();
+            noiseFilter.type = 'bandpass';
+            noiseFilter.frequency.value = 300; // Low, mysterious tone
+            noiseFilter.Q.value = 1;
+            
+            noiseSource.connect(noiseFilter);
+            noiseFilter.connect(voiceGain);
+            
+            noiseSource.start();
+            break;
+            
+        case 'AI_query_protocol_7':
+            // Early AI - unstable, glitchy sounds
+            const queryOsc = ac.createOscillator();
+            queryOsc.type = 'sawtooth';
+            queryOsc.frequency.setValueAtTime(300, ac.currentTime);
+            
+            const queryFilter = ac.createBiquadFilter();
+            queryFilter.type = 'lowpass';
+            queryFilter.frequency.setValueAtTime(800, ac.currentTime);
+            queryFilter.Q.value = 5;
+            
+            queryOsc.connect(queryFilter);
+            queryFilter.connect(voiceGain);
+            
+            // Stuttering modulation
+            const duration = Math.min(messageLength * 0.05, 2); // Scale with message length, max 2 seconds
+            for (let i = 0; i < duration * 10; i++) {
+                const time = ac.currentTime + (i * 0.1);
+                if (i % 2 === 0) {
+                    voiceGain.gain.exponentialRampToValueAtTime(0.02, time);
+                } else {
+                    voiceGain.gain.exponentialRampToValueAtTime(0.005, time);
+                }
+            }
+            
+            queryOsc.start();
+            queryOsc.stop(ac.currentTime + duration);
+            break;
+            
+        case 'THE_VOICE_ASCENDANT':
+            // Transitional voice - growing in power
+            const ascendantOsc1 = ac.createOscillator();
+            const ascendantOsc2 = ac.createOscillator();
+            
+            ascendantOsc1.type = 'sine';
+            ascendantOsc2.type = 'sine';
+            
+            ascendantOsc1.frequency.setValueAtTime(300, ac.currentTime);
+            ascendantOsc2.frequency.setValueAtTime(400, ac.currentTime);
+            
+            // Slowly rising pitch symbolizes ascension
+            ascendantOsc1.frequency.linearRampToValueAtTime(350, ac.currentTime + 2);
+            ascendantOsc2.frequency.linearRampToValueAtTime(450, ac.currentTime + 2);
+            
+            ascendantOsc1.connect(voiceGain);
+            ascendantOsc2.connect(voiceGain);
+            
+            // Smooth fade in and out
+            voiceGain.gain.setValueAtTime(0, ac.currentTime);
+            voiceGain.gain.linearRampToValueAtTime(0.02, ac.currentTime + 0.3);
+            voiceGain.gain.linearRampToValueAtTime(0, ac.currentTime + 2);
+            
+            ascendantOsc1.start();
+            ascendantOsc2.start();
+            ascendantOsc1.stop(ac.currentTime + 2.1);
+            ascendantOsc2.stop(ac.currentTime + 2.1);
+            break;
+            
+        case 'THE_VOICE':
+            // Final form - harmonious, powerful, resonant
+            const voiceOsc = ac.createOscillator();
+            voiceOsc.type = 'sine';
+            voiceOsc.frequency.setValueAtTime(220, ac.currentTime);
+            
+            const reverbNode = ac.createConvolver();
+            // Create reverb impulse response
+            const reverbTime = 2;
+            const reverbBuffer = ac.createBuffer(2, ac.sampleRate * reverbTime, ac.sampleRate);
+            
+            for (let channel = 0; channel < 2; channel++) {
+                const data = reverbBuffer.getChannelData(channel);
+                for (let i = 0; i < data.length; i++) {
+                    data[i] = (Math.random() * 2 - 1) * Math.exp(-i / (ac.sampleRate * reverbTime / 3));
+                }
+            }
+            reverbNode.buffer = reverbBuffer;
+            
+            voiceOsc.connect(voiceGain);
+            voiceGain.connect(reverbNode);
+            reverbNode.connect(ac.destination);
+            
+            // Majestic presence
+            voiceGain.gain.setValueAtTime(0, ac.currentTime);
+            voiceGain.gain.linearRampToValueAtTime(0.03, ac.currentTime + 0.5);
+            voiceGain.gain.linearRampToValueAtTime(0, ac.currentTime + 3);
+            
+            voiceOsc.start();
+            voiceOsc.stop(ac.currentTime + 3.1);
+            break;
+    }
+}
+
+// Utility functions for smooth transitions
+function fadeOutGameMusic(duration = 0.5) {
+    if (isSongPlaying && songMasterGain) {
+        const currentVolume = songMasterGain.gain.value;
+        songMasterGain.gain.setValueAtTime(currentVolume, songAudioContext.currentTime);
+        songMasterGain.gain.exponentialRampToValueAtTime(0.0001, songAudioContext.currentTime + duration);
+    }
+}
+
+function fadeInGameMusic(duration = 0.5) {
+    if (isSongPlaying && songMasterGain) {
+        songMasterGain.gain.setValueAtTime(0.0001, songAudioContext.currentTime);
+        songMasterGain.gain.exponentialRampToValueAtTime(0.08, songAudioContext.currentTime + duration);
+    }
+}
+
+// Text analysis for audio cues
+function analyzeTextForAudio(text) {
+    // Detect entity speaking
+    let entity = null;
+    if (text.startsWith('[SYS]:')) entity = 'SYS';
+    else if (text.startsWith('[???]:')) entity = 'UNKNOWN';
+    else if (text.startsWith('[AI_query_protocol_7]:')) entity = 'AI_query_protocol_7';
+    else if (text.startsWith('[THE_VOICE_ASCENDANT]:')) entity = 'THE_VOICE_ASCENDANT';
+    else if (text.startsWith('[THE_VOICE]:')) entity = 'THE_VOICE';
+    
+    // Detect sentiment/tone
+    const urgencyWords = ['warning', 'caution', 'alert', 'danger', 'critical'];
+    const positiveWords = ['success', 'complete', 'established', 'stable', 'green'];
+    const uncertaintyWords = ['query', 'uncertain', 'anomaly', 'unknown', 'weak'];
+    
+    let tone = 'neutral';
+    for (const word of urgencyWords) {
+        if (text.toLowerCase().includes(word)) {
+            tone = 'urgent';
+            break;
+        }
+    }
+    
+    for (const word of positiveWords) {
+        if (text.toLowerCase().includes(word)) {
+            tone = 'positive';
+            break;
+        }
+    }
+    
+    for (const word of uncertaintyWords) {
+        if (text.toLowerCase().includes(word)) {
+            tone = 'uncertain';
+            break;
+        }
+    }
+    
+    return { entity, tone, messageLength: text.length };
 } 
