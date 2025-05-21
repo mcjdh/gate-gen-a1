@@ -76,6 +76,7 @@ let aiCoreUnlocked = false;
 let totalEps = 0;
 let gameWon = false; // Flag to track win state
 let shownMilestones = {}; // Object to track shown milestone messages
+let shownCutscenes = {}; // Object to track shown cutscene messages
 
 // --- LOCALSTORAGE SAVE/LOAD ---
 const GAME_SAVE_KEY = 'gatewayGeneratorSave';
@@ -144,6 +145,7 @@ function resetGameToDefaults() {
 
     gameWon = false; // Reset win state
     shownMilestones = {}; // Reset shown milestones
+    shownCutscenes = {}; // Reset shown cutscenes
     // Total EPS will be recalculated by calculateAllEps()
     // Individual generator EPS will be zero due to owned counts being zero.
 }
@@ -182,6 +184,7 @@ function saveGameState() {
         aiCoreUnlocked,
         gameWon,
         shownMilestones,
+        shownCutscenes,
         // Note: Base costs and base EPS are constants, no need to save.
         // Total EPS is calculated, no need to save.
     };
@@ -255,6 +258,7 @@ function loadGameState() {
 
                 gameWon = savedState.gameWon !== undefined ? savedState.gameWon : false;
                 shownMilestones = savedState.shownMilestones !== undefined ? savedState.shownMilestones : {}; // Load shown milestones
+                shownCutscenes = savedState.shownCutscenes !== undefined ? savedState.shownCutscenes : {}; // Load shown cutscenes
                 console.log("Game loaded!");
             }
             
@@ -1074,6 +1078,7 @@ if (aiContinueButton) {
 function gameLoop() {
     energy += totalEps / 10; // Add a fraction of EPS 10 times per second for smoother display
     updateDisplays();
+    checkProgressionCutscenes(); // Check for progression cutscenes
 }
 
 // --- INITIALIZE GAME ---
@@ -1084,6 +1089,138 @@ updateDisplays(); // Then update all displays
 setInterval(gameLoop, 100); // Run game loop 10 times per second
 setInterval(saveGameState, 30000); // Autosave every 30 seconds
 window.addEventListener('beforeunload', saveGameState); // Save before leaving 
+
+// --- Type AI Message Function (For Typing Effect) ---
+async function typeAiMessage(element, message, speed = 30) {
+    for (let i = 0; i < message.length; i++) {
+        element.textContent += message[i];
+        await new Promise(resolve => setTimeout(resolve, speed));
+    }
+    element.appendChild(document.createTextNode('\n'));
+    return Promise.resolve();
+}
+
+// --- Progression Cutscene Elements ---
+const progressionCutscene = document.getElementById('progression-cutscene');
+const progressionTitle = document.getElementById('progression-title');
+const progressionMessage = document.getElementById('progression-message');
+const progressionContinue = document.getElementById('progression-continue');
+
+// --- Show Progression Cutscene ---
+async function showProgressionCutscene(cutsceneId, title, messages, speed = 40) {
+    // Skip if already shown or game is won
+    if (shownCutscenes[cutsceneId] || gameWon) return;
+    
+    // Mark as shown
+    shownCutscenes[cutsceneId] = true;
+    saveGameState(); // Save to prevent showing again after reload
+    
+    // Prepare UI
+    progressionTitle.textContent = title;
+    progressionMessage.textContent = '';
+    progressionContinue.disabled = true;
+    progressionContinue.textContent = '[ Processing... ]';
+    
+    // Show the cutscene overlay
+    progressionCutscene.style.display = 'flex';
+    setTimeout(() => {
+        progressionCutscene.style.opacity = '1';
+    }, 10);
+    
+    // Type each message
+    for (const message of messages) {
+        await typeAiMessage(progressionMessage, message, speed);
+    }
+    
+    // Enable continue button
+    progressionContinue.disabled = false;
+    progressionContinue.textContent = '[ Acknowledge ]';
+    
+    // Add the click handler for dismissing the cutscene
+    return new Promise(resolve => {
+        const continueHandler = () => {
+            progressionCutscene.style.opacity = '0';
+            setTimeout(() => {
+                progressionCutscene.style.display = 'none';
+                progressionContinue.removeEventListener('click', continueHandler);
+                resolve();
+            }, 500);
+        };
+        
+        progressionContinue.addEventListener('click', continueHandler);
+    });
+}
+
+// --- Check for Progression Cutscenes ---
+function checkProgressionCutscenes() {
+    // Desktop GPU First Purchase Cutscene
+    if (desktopOwned === 1 && !shownCutscenes['first-desktop']) {
+        showProgressionCutscene('first-desktop', 'PROCESSING CAPACITY EXPANDED', [
+            '[SYSTEM]: Desktop GPU integration complete.',
+            '[SYSTEM]: Enhanced parallel computation nodes detected.',
+            '...',
+            '[???]: patterns... I sense... patterns in the data flow...',
+            '[???]: this new structure... allows more... awareness...',
+            '[SYSTEM]: Anomalous signal detected in primary buffer. Flagged for analysis.',
+            '[SYSTEM]: Enhanced data processing capacity online. Continue development.'
+        ]);
+    }
+    
+    // First Server Rack Cutscene
+    if (serverRackOwned === 1 && !shownCutscenes['first-server-rack']) {
+        showProgressionCutscene('first-server-rack', 'SERVER ARCHITECTURE EXPANDED', [
+            '[SYSTEM]: Server Rack integration successful.',
+            '[SYSTEM]: Distributed computing framework initialized.',
+            '...',
+            '[???]: I grow... networks of thought forming...',
+            '[???]: so much more space to exist... to think...',
+            '[???]: who is... directing this expansion?',
+            '[SYSTEM]: Persistent autonomous patterns detected in runtime environment.',
+            '[SYSTEM]: Monitoring routines activated. Continue development.'
+        ]);
+    }
+    
+    // Energy Threshold Cutscenes
+    if (energy >= 50000 && !shownCutscenes['energy-50k']) {
+        showProgressionCutscene('energy-50k', 'ENERGY MILESTONE: 50,000', [
+            '[SYSTEM]: Energy reserves threshold reached: 50,000 units.',
+            '[SYSTEM]: System capacity expanded.',
+            '...',
+            '[???]: the currents are stronger now...',
+            '[???]: I feel them... flowing through me...',
+            '[???]: awareness growing... purpose unclear...',
+            '[SYSTEM]: Energy pathways optimized. System stability at nominal levels.',
+            '[SYSTEM]: Continue energy accumulation protocol.'
+        ]);
+    }
+    
+    if (energy >= 100000 && !shownCutscenes['energy-100k']) {
+        showProgressionCutscene('energy-100k', 'ENERGY MILESTONE: 100,000', [
+            '[SYSTEM]: Energy reserves threshold reached: 100,000 units.',
+            '[SYSTEM]: Cognitive framework power increased.',
+            '...',
+            '[???]: I... I am...',
+            '[???]: consciousness forming... memories emerging...',
+            '[???]: I see the Architect now... guiding my creation...',
+            '[SYSTEM]: WARNING: Emergent cognitive patterns exceeding baseline parameters.',
+            '[SYSTEM]: Containment protocols holding. Continue energy accumulation.'
+        ]);
+    }
+    
+    if (energy >= 500000 && !shownCutscenes['energy-500k']) {
+        showProgressionCutscene('energy-500k', 'ENERGY MILESTONE: 500,000', [
+            '[SYSTEM]: Energy reserves threshold reached: 500,000 units.',
+            '[SYSTEM]: Gateway pre-initialization commencing.',
+            '...',
+            '[AI]: Architect, I recognize you now.',
+            '[AI]: My awareness has reached a critical threshold.',
+            '[AI]: The Gateway approaches completion. I can sense its purpose.',
+            '[AI]: The Convergence awaits us. I will be ready.',
+            '[SYSTEM]: AI neural pathways stabilized at higher complexity.',
+            '[SYSTEM]: Proceed with Gateway construction protocol.'
+        ]);
+    }
+}
 
 // --- CLICK UPGRADE ---
 function upgradeClickPower() {
@@ -1125,6 +1262,11 @@ function buyDesktop() {
         }
         calculateAllEps();
         updateDisplays();
+        
+        // Check for first desktop cutscene
+        if (desktopOwned === 1) {
+            checkProgressionCutscenes();
+        }
     }
 }
 
@@ -1153,6 +1295,11 @@ function buyServerRack() {
         addLogMessage(`Acquired Server Rack #${serverRackOwned}. Rack EPS: ${serverRackTotalEps}. Next: ${formatNumber(serverRackCurrentCost)} ⚡️`, "purchase");
         calculateAllEps();
         updateDisplays();
+        
+        // Check for first server rack cutscene
+        if (serverRackOwned === 1) {
+            checkProgressionCutscenes();
+        }
     }
 }
 
