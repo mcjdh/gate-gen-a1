@@ -91,7 +91,7 @@ button:disabled {
 body.dark-mode {
     background-color: #1a1a1a; /* Very dark grey */
     color: #e0e0e0; /* Light grey/off-white */
-    font-family: 'VT323', monospace; /* Apply VT323 font globally in dark mode */
+    font-family: 'VT323', 'Courier New', Courier, monospace; /* Apply VT323 font globally in dark mode with fallbacks */
 }
 
 body.dark-mode #game-container {
@@ -110,7 +110,7 @@ body.dark-mode button {
     background-color: #333; /* Dark grey for buttons */
     color: #ccc; /* Light grey text */
     border: 1px solid #444; /* Slightly lighter border */
-    font-family: 'VT323', monospace;
+    font-family: 'VT323', 'Courier New', Courier, monospace;
 }
 
 body.dark-mode button.affordable {
@@ -699,14 +699,14 @@ body.dark-mode #click-button.clicked {
 /* Ensure cutscene text uses VT323 and is B&W */
 #progression-cutscene.dark-mode-active .cutscene-text p,
 #progression-cutscene.dark-mode-active #progression-title {
-    font-family: 'VT323', monospace;
+    font-family: 'VT323', 'Courier New', Courier, monospace;
     color: #e0e0e0; /* Light grey text */
     text-shadow: 1px 1px 1px #1a1a1a; /* Subtle shadow for depth */
 }
 
 /* Specific styling for the main cutscene message area in dark mode */
 #progression-cutscene.dark-mode-active #progression-message {
-    font-family: 'VT323', monospace;
+    font-family: 'VT323', 'Courier New', Courier, monospace;
     color: #e0e0e0;
     text-shadow: 0 0 3px rgba(224, 224, 224, 0.7); /* Subtle white glow */
     /* animation: text-glitch-effect 4s infinite steps(1, end); */ /* Optional: AI voice glitch */
@@ -729,7 +729,7 @@ body.dark-mode #click-button.clicked {
     background-color: #f0f0f0;
     color: #1a1a1a;
     border: 1px solid #aaa;
-    font-family: 'VT323', monospace;
+    font-family: 'VT323', 'Courier New', Courier, monospace;
 }
 
 #progression-cutscene.dark-mode-active #progression-continue:hover {
@@ -766,7 +766,7 @@ body.dark-mode::before {
 /* Make sure the VT323 font is used for cutscene text as per previous implementation */
 #progression-cutscene .cutscene-text p,
 #progression-cutscene #progression-title {
-    font-family: 'VT323', monospace; /* This was already specified, ensuring it's maintained */
+    font-family: 'VT323', 'Courier New', Courier, monospace; /* This was already specified, ensuring it's maintained */
 }
 
 body.dark-mode #system-log-header {

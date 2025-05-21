@@ -1,3 +1,5 @@
+"use strict";
+
 let energy = 0;
 let energyPerClick = 2;
 let clickUpgradeLevel = 0;
