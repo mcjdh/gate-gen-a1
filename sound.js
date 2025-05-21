@@ -1038,6 +1038,23 @@ function initAudio() {
     const ac = getAudioContext();
     console.log("Audio context state:", ac ? ac.state : "No audio context");
     
+    // On iOS/Safari, we need to start with a silent buffer
+    if (ac && (navigator.userAgent.match(/(iPad|iPhone|iPod)/g) || 
+        (navigator.userAgent.includes('Safari') && !navigator.userAgent.includes('Chrome')))) {
+        console.log("iOS/Safari detected, playing silent buffer to initialize audio");
+        try {
+            // Create an empty buffer
+            const buffer = ac.createBuffer(1, 1, 22050);
+            const source = ac.createBufferSource();
+            source.buffer = buffer;
+            source.connect(ac.destination);
+            source.start(0);
+            console.log("Silent buffer played");
+        } catch (e) {
+            console.warn("Failed to play silent buffer:", e);
+        }
+    }
+    
     // Add event listeners to unlock audio
     const unlockEvents = ['click', 'touchstart', 'touchend', 'mousedown', 'keydown'];
     const unlockHandler = function(e) {
@@ -1100,5 +1117,10 @@ window.analyzeTextForAudio = analyzeTextForAudio;
 window.getAudioContext = getAudioContext;
 window.unlockAudioContext = unlockAudioContext;
 
-// Initialize audio system
-document.addEventListener('DOMContentLoaded', initAudio); 
+// Initialize audio system - handle both immediate load and DOMContentLoaded
+if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', initAudio);
+} else {
+    // DOM already loaded, initialize immediately
+    initAudio();
+} 
