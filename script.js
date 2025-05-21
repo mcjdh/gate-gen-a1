@@ -1421,10 +1421,8 @@ function updateAsciiGraph() {
     // Add axes labels
     graphArray[0][0] = 'E';
     graphArray[1][0] = 'N';
-    graphArray[2][0] = 'E';
-    graphArray[3][0] = 'R';
-    graphArray[4][0] = 'G';
-    graphArray[5][0] = 'Y';
+    graphArray[2][0] = 'O';
+    graphArray[3][0] = 'W';
     
     graphArray[height-1][width-5] = 'T';
     graphArray[height-1][width-4] = 'I';
@@ -1440,7 +1438,7 @@ function updateAsciiGraph() {
         const y = Math.max(0, Math.min(height - 2, height - 2 - Math.floor(normalizedY)));
         
         // Use different characters for the data points
-        graphArray[y][x+1] = x % 2 === 0 ? '■' : '□';
+        graphArray[y][x+1] = x % 2 === 0 ? '█' : '▓';
         
         // Connect points with lines if not the first point
         if (x > 0) {
@@ -1452,20 +1450,20 @@ function updateAsciiGraph() {
                 const end = Math.max(prevY, y);
                 
                 for (let i = start + 1; i < end; i++) {
-                    graphArray[i][x] = '┃';
+                    graphArray[i][x] = '║';
                 }
                 
                 // Add connecting corners
                 if (prevY < y) {
-                    graphArray[prevY][x] = '┗';
-                    graphArray[y][x] = '┓';
+                    graphArray[prevY][x] = '╚';
+                    graphArray[y][x] = '╗';
                 } else {
-                    graphArray[prevY][x] = '┛';
-                    graphArray[y][x] = '┏';
+                    graphArray[prevY][x] = '╝';
+                    graphArray[y][x] = '╔';
                 }
             } else {
                 // Same level - use horizontal connector
-                graphArray[y][x] = '━';
+                graphArray[y][x] = '═';
             }
         }
     }
