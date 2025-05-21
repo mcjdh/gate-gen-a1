@@ -43,6 +43,18 @@ function unlockAudioContext() {
                 console.warn('Error resuming song AudioContext:', err);
             });
         }
+        
+        // Trigger events to let other code know audio is now available
+        document.dispatchEvent(new Event('audioUnlocked'));
+        
+        // Start audio if called from a user interaction but not yet playing
+        if (typeof startAmbientMusic === 'function' && !isPlaying) {
+            startAmbientMusic();
+        }
+        
+        if (typeof startProceduralSong === 'function' && !isSongPlaying) {
+            startProceduralSong();
+        }
     }).catch(err => {
         console.warn('Error resuming AudioContext:', err);
         showAudioUnlockPrompt();
@@ -74,6 +86,21 @@ function showAudioUnlockPrompt() {
         audioUnlockPrompt.style.zIndex = '1000';
         audioUnlockPrompt.style.fontSize = '14px';
         audioUnlockPrompt.style.textAlign = 'center';
+        audioUnlockPrompt.style.fontFamily = 'monospace';
+        audioUnlockPrompt.style.border = '1px solid #333';
+        audioUnlockPrompt.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.5)';
+        
+        // Style the button to match the game's aesthetics
+        const button = audioUnlockPrompt.querySelector('button');
+        if (button) {
+            button.style.backgroundColor = '#222';
+            button.style.color = '#fff';
+            button.style.border = '1px solid #444';
+            button.style.padding = '5px 10px';
+            button.style.cursor = 'pointer';
+            button.style.marginTop = '5px';
+            button.style.fontFamily = 'monospace';
+        }
         
         // Add explicit click handler for the button
         audioUnlockPrompt.addEventListener('click', (e) => {
@@ -1005,14 +1032,20 @@ function analyzeTextForAudio(text) {
 
 // Initialize audio and set up event listeners
 function initAudio() {
+    console.log("Initializing audio system");
+    
     // Get the audio context but don't start playback yet
-    getAudioContext();
+    const ac = getAudioContext();
+    console.log("Audio context state:", ac ? ac.state : "No audio context");
     
     // Add event listeners to unlock audio
     const unlockEvents = ['click', 'touchstart', 'touchend', 'mousedown', 'keydown'];
     const unlockHandler = function(e) {
+        console.log("Trying to unlock audio from", e.type, "event");
+        
         // Try to unlock audio
         if (unlockAudioContext()) {
+            console.log("Audio successfully unlocked from user gesture");
             // If successfully unlocked, we can remove these event listeners
             unlockEvents.forEach(eventType => {
                 document.removeEventListener(eventType, unlockHandler);
@@ -1029,9 +1062,23 @@ function initAudio() {
     setTimeout(() => {
         const ac = getAudioContext();
         if (ac && ac.state !== 'running' && !isAudioUnlocked) {
+            console.log("Audio context still suspended after delay, showing prompt");
             showAudioUnlockPrompt();
         }
     }, 1000);
+    
+    // Also add a periodic check for audio context state
+    const checkAudioInterval = setInterval(() => {
+        const ac = getAudioContext();
+        if (!ac) return;
+        
+        if (ac.state === 'running' && !isAudioUnlocked) {
+            console.log("Audio context is now running, marking as unlocked");
+            isAudioUnlocked = true;
+            hideAudioUnlockPrompt();
+            clearInterval(checkAudioInterval);
+        }
+    }, 2000);
     
     return true;
 }
