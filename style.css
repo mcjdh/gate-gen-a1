@@ -58,46 +58,84 @@ button:disabled {
     box-shadow: none !important;
 }
 
+/* Glitch Animation */
+@keyframes text-glitch-effect {
+    2%, 64% {
+        transform: translate(1px, -1px) skewX(-2deg);
+        text-shadow: -1px -1px 0 #ff00ff, 1px 1px 0 #00ffff; /* Magenta/Cyan for classic glitch, can be white/grey */
+    }
+    4%, 60% {
+        transform: translate(-1px, 1px) skewX(2deg);
+        text-shadow: 1px 1px 0 #ff00ff, -1px -1px 0 #00ffff;
+    }
+    62% {
+        transform: translate(0, 0) skewX(0);
+        text-shadow: none;
+    }
+    /* More subtle B&W glitch */
+    0%, 100% {
+        text-shadow: 0.5px 0.5px 0 #fff, -0.5px -0.5px 0 #555;
+        transform: none;
+    }
+    33% {
+        text-shadow: -0.5px 0.5px 0 #fff, 0.5px -0.5px 0 #555;
+        transform: translate(-1px, 0px);
+    }
+    66% {
+        text-shadow: 0.5px -0.5px 0 #fff, -0.5px 0.5px 0 #555;
+        transform: translate(1px, 0px);
+    }
+}
+
 /* Dark Mode Styles */
 body.dark-mode {
-    background-color: #333;
-    color: #f0f0f0;
+    background-color: #1a1a1a; /* Very dark grey */
+    color: #e0e0e0; /* Light grey/off-white */
+    font-family: 'VT323', monospace; /* Apply VT323 font globally in dark mode */
 }
 
 body.dark-mode #game-container {
-    background-color: #444;
-    box-shadow: 0 0 10px rgba(255, 255, 255, 0.1);
+    background-color: #222; /* Darker grey for container */
+    box-shadow: 0 0 10px rgba(200, 200, 200, 0.1); /* Softer white glow */
+    border: 1px solid #333; /* Subtle border for the container */
+}
+
+body.dark-mode h1, body.dark-mode h2, body.dark-mode h3 {
+    animation: text-glitch-effect 3s infinite steps(1, end);
+    color: #f5f5f5; /* Brighter white for headers */
+    filter: grayscale(100%); /* Make emojis in headers monochrome */
 }
 
 body.dark-mode button {
-    /* Default (unaffordable) for dark mode */
-    background-color: #555;
-    color: #bbb; /* Slightly brighter than pure #ccc for better readability */
-    border: 1px solid #444;
+    background-color: #333; /* Dark grey for buttons */
+    color: #ccc; /* Light grey text */
+    border: 1px solid #444; /* Slightly lighter border */
+    font-family: 'VT323', monospace;
 }
 
 body.dark-mode button.affordable {
-    background-color: #007bff; /* Keep blue for affordable or choose a dark-mode friendly highlight */
-    color: white;
-    border-color: #0056b3; /* Or a slightly lighter blue like #3689d4 */
-    box-shadow: 0 0 5px rgba(0, 123, 255, 0.5);
+    background-color: #f0f0f0; /* Very light grey / off-white */
+    color: #1a1a1a; /* Dark text for contrast */
+    border-color: #aaa; /* Grey border */
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.5); /* White glow */
 }
 
-body.dark-mode button:hover:not(:disabled):not(.affordable) { /* Hover for default/unaffordable in dark mode */
-    background-color: #666;
+body.dark-mode button:hover:not(:disabled):not(.affordable) {
+    background-color: #444; /* Slightly lighter on hover */
     border-color: #555;
 }
 
-body.dark-mode button.affordable:hover:not(:disabled) { /* Hover for affordable in dark mode */
-    background-color: #0056b3;
-    border-color: #004085;
-    box-shadow: 0 0 8px rgba(0, 123, 255, 0.75);
+body.dark-mode button.affordable:hover:not(:disabled) {
+    background-color: #ffffff; /* Pure white on hover */
+    color: #000000; /* Pure black text */
+    border-color: #999;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.75); /* Enhanced glow */
 }
 
 body.dark-mode button:disabled {
-    background-color: #2a2a2a !important;
-    color: #666 !important;
-    border-color: #222 !important;
+    background-color: #202020 !important; /* Even darker grey for disabled */
+    color: #555 !important; /* Muted text */
+    border-color: #1a1a1a !important;
 }
 
 /* Generator Upgrade Styling */
@@ -168,8 +206,8 @@ body:not(.dark-mode) .flavor-text {
     margin-top: 15px;
     margin-bottom: 15px;
     padding: 10px;
-    height: 100px; /* Fixed height */
-    min-height: 70px; /* Minimum height */
+    height: 200px; /* Fixed height - Doubled */
+    min-height: 140px; /* Minimum height - Adjusted proportionally */
     display: flex;
     flex-direction: column;
 }
@@ -186,7 +224,7 @@ body:not(.dark-mode) #system-log-container {
 }
 
 body.dark-mode #system-log-header {
-    color: #63aeff; /* Lighter blue for dark mode */
+    color: #e0e0e0; /* Light grey for system log header */
 }
 
 #system-log-messages {
@@ -202,7 +240,7 @@ body.dark-mode #system-log-header {
     padding: 2px 5px;
     margin-bottom: 3px; /* Spacing between messages */
     border-radius: 3px;
-    font-size: 0.9em;
+    font-size: 0.95em; /* Slightly increased font size */
 }
 
 /* System Log Message Types */
@@ -577,4 +615,164 @@ body:not(.dark-mode) .gateway-component-upgrade .flavor-text {
     background-color: #4a3b30 !important; /* Darker brown when disabled */
     color: #8c7853 !important;
     border-color: #3b2f2f !important;
-} 
+}
+
+/* Locked Upgrade Styling in Dark Mode */
+body.dark-mode .locked-upgrade {
+    opacity: 0.5; /* Slightly more visible than default 0.6 if needed */
+    border-style: dashed;
+    border-color: #555; /* Ensure border color is visible */
+}
+
+body.dark-mode .locked-upgrade button {
+    pointer-events: none; /* Already there, good */
+    background-color: #333333 !important; /* Consistent disabled-like style */
+    color: #777777 !important;
+    border-color: #444444 !important;
+}
+
+body.dark-mode .locked-upgrade .flavor-text::before {
+    content: "[LOCKED] ";
+    font-weight: bold;
+    color: #888; /* Muted color for [LOCKED] prefix */
+}
+
+body.dark-mode .flavor-text {
+    color: #999; /* Darkened slightly from #aaa */
+    text-shadow: 0 0 1px rgba(200, 200, 200, 0.5); /* Very subtle white glow */
+    font-style: italic; /* Ensure italic style is maintained if overridden by global font */
+}
+
+body.dark-mode #click-button {
+    background-color: #f0f0f0; /* Off-white, similar to affordable buttons */
+    color: #1a1a1a; /* Dark text */
+    border: 1px solid #aaa;
+    box-shadow: 0 0 5px rgba(255, 255, 255, 0.3);
+}
+
+body.dark-mode #click-button:hover {
+    background-color: #ffffff;
+    color: #000000;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.5);
+}
+
+body.dark-mode #click-button.clicked {
+    transform: scale(0.95);
+    background-color: #e0e0e0; /* Slightly different shade when clicked */
+}
+
+
+/* Ensure cutscene text uses VT323 and is B&W */
+#progression-cutscene.dark-mode-active .cutscene-text p,
+#progression-cutscene.dark-mode-active #progression-title {
+    font-family: 'VT323', monospace;
+    color: #e0e0e0; /* Light grey text */
+    text-shadow: 1px 1px 1px #1a1a1a; /* Subtle shadow for depth */
+}
+
+/* Specific styling for the main cutscene message area in dark mode */
+#progression-cutscene.dark-mode-active #progression-message {
+    font-family: 'VT323', monospace;
+    color: #e0e0e0;
+    text-shadow: 0 0 3px rgba(224, 224, 224, 0.7); /* Subtle white glow */
+    /* animation: text-glitch-effect 4s infinite steps(1, end); */ /* Optional: AI voice glitch */
+    background-color: #0a0a0a; /* Slightly darker than content box for definition */
+    border: 1px solid #444; /* Consistent with other dark mode elements */
+}
+
+#progression-cutscene.dark-mode-active {
+    background-color: rgba(10, 10, 10, 0.9); /* Very dark, almost black semi-transparent background */
+    color: #e0e0e0;
+}
+
+#progression-cutscene.dark-mode-active #progression-content {
+    background-color: #1a1a1a; /* Solid dark background for the content box */
+    border: 1px solid #555;
+    box-shadow: 0 0 15px rgba(200, 200, 200, 0.2);
+}
+
+#progression-cutscene.dark-mode-active #progression-continue {
+    background-color: #f0f0f0;
+    color: #1a1a1a;
+    border: 1px solid #aaa;
+    font-family: 'VT323', monospace;
+}
+
+#progression-cutscene.dark-mode-active #progression-continue:hover {
+    background-color: #ffffff;
+    color: #000000;
+}
+
+
+/* Apply general glitch to body in dark mode if desired - can be performance intensive */
+
+body.dark-mode::before {
+    content: '';
+    position: fixed;
+    top: 0;
+    left: 0;
+    width: 100vw;
+    height: 100vh;
+    pointer-events: none;
+    background:
+        repeating-linear-gradient(0deg, rgba(255,255,255,0.02), rgba(255,255,255,0.03) 1px, transparent 1px, transparent 8px), /* Horizontal scan lines */
+        repeating-linear-gradient(90deg, rgba(50,50,50,0.01), rgba(50,50,50,0.02) 1px, transparent 1px, transparent 6px); /* Vertical, very faint lines */
+    /* animation: screen-flicker 0.5s infinite steps(1); // Kept commented, can be too much */
+    z-index: -1; /* Place it behind content */
+    opacity: 0.4; /* Adjust for subtlety */
+}
+
+/*
+@keyframes screen-flicker {
+    0%, 100% { opacity: 0.1; }
+    50% { opacity: 0.3; }
+}
+*/
+
+/* Make sure the VT323 font is used for cutscene text as per previous implementation */
+#progression-cutscene .cutscene-text p,
+#progression-cutscene #progression-title {
+    font-family: 'VT323', monospace; /* This was already specified, ensuring it's maintained */
+}
+
+body.dark-mode #system-log-header {
+    color: #e0e0e0; /* Light grey for system log header */
+}
+
+body.dark-mode .log-message {
+    /* Base styling for monochrome log messages */
+    color: #c0c0c0; /* Default light grey for messages */
+}
+
+body.dark-mode .log-milestone {
+    color: #ffffff; /* White for milestones */
+    font-weight: bold;
+    /* text-shadow: 0 0 3px #ffffff; */ /* Optional glow */
+}
+
+body.dark-mode .log-purchase {
+    color: #d3d3d3; /* LightGrey for purchases */
+}
+
+body.dark-mode .log-warning {
+    color: #f0f0f0; /* Off-white for warnings, perhaps with a border or icon later */
+    /* border-left: 2px solid #f0f0f0; */
+    /* padding-left: 3px; */
+}
+
+body.dark-mode .log-error {
+    color: #ffffff; /* White for errors */
+    font-weight: bold;
+    background-color: #404040; /* Dark background to make it stand out */
+}
+
+body.dark-mode .log-system-event {
+    color: #a0a0a0; /* Mid-grey for system events */
+    font-style: italic;
+}
+
+/* Make sure energy icon is also monochrome in dark mode */
+body.dark-mode #energyDisplay {
+    filter: grayscale(100%);
+    display: inline-block; /* Needed for filter to apply consistently on some browsers */
+}
