@@ -1312,6 +1312,23 @@ loadGameState(); // Load game state first
 calculateAllEps(); // Then calculate EPS based on loaded values
 updateDisplays(); // Then update all displays
 
+// Initialize energy history with current energy value to have some initial data
+function initializeEnergyHistory() {
+    // Clear any existing history
+    energyHistory = [];
+    
+    // Add current energy value multiple times to create initial data
+    for (let i = 0; i < ENERGY_HISTORY_MAX_POINTS; i++) {
+        energyHistory.push(energy);
+    }
+    
+    // Update the graph with this initial data
+    updateAsciiGraph();
+}
+
+// Call it to initialize the graph
+initializeEnergyHistory();
+
 // --- ASCII ENERGY GRAPH FUNCTIONS ---
 /**
  * Updates the energy history array for the ASCII graph
@@ -1336,18 +1353,34 @@ function updateAsciiGraph() {
     if (!graph || energyHistory.length < 2) return;
     
     const width = 16;
-    const height = 16;
+    const height = 12;
     
     // Create empty graph canvas
     let graphArray = Array(height).fill().map(() => Array(width).fill(' '));
     
     // Calculate min and max for scaling
-    const minEnergy = Math.min(...energyHistory);
-    const maxEnergy = Math.max(...energyHistory);
-    const range = maxEnergy - minEnergy || 1; // Prevent division by zero
+    let minEnergy = Math.min(...energyHistory);
+    let maxEnergy = Math.max(...energyHistory);
+    
+    // Ensure there's always some range to display
+    if (maxEnergy === minEnergy) {
+        minEnergy = Math.max(0, minEnergy - minEnergy * 0.1);
+        maxEnergy = maxEnergy + maxEnergy * 0.1 || 1;
+    }
+    
+    const range = maxEnergy - minEnergy;
     
     // Plot the energy history points
     const points = energyHistory.slice(-width); // Get the last 'width' points
+    
+    // Draw axes
+    for (let x = 0; x < width; x++) {
+        graphArray[height - 1][x] = '─';
+    }
+    for (let y = 0; y < height; y++) {
+        graphArray[y][0] = '│';
+    }
+    graphArray[height - 1][0] = '┼';
     
     // Add axes labels
     graphArray[0][0] = 'E';
@@ -1361,72 +1394,51 @@ function updateAsciiGraph() {
     graphArray[height-1][width-4] = 'I';
     graphArray[height-1][width-3] = 'M';
     graphArray[height-1][width-2] = 'E';
-    graphArray[height-1][width-1] = '>';
+    graphArray[height-1][width-1] = '→';
     
     // Draw points and connecting lines
     for (let x = 0; x < points.length; x++) {
-        const normalizedY = ((points[x] - minEnergy) / range) * (height - 4);
-        const y = height - 3 - Math.floor(normalizedY);
+        if (x >= width - 1) break; // Stay within bounds
         
-        if (y >= 0 && y < height - 1) {
-            graphArray[y][x+1] = '█'; // Use a solid block for points
+        const normalizedY = ((points[x] - minEnergy) / range) * (height - 3);
+        const y = Math.max(0, Math.min(height - 2, height - 2 - Math.floor(normalizedY)));
+        
+        // Use different characters for the data points
+        graphArray[y][x+1] = x % 2 === 0 ? '■' : '□';
+        
+        // Connect points with lines if not the first point
+        if (x > 0) {
+            const prevY = Math.max(0, Math.min(height - 2, height - 2 - Math.floor(((points[x-1] - minEnergy) / range) * (height - 3))));
             
-            // If this isn't the first point, draw a connection to the previous point
-            if (x > 0) {
-                const prevNormalizedY = ((points[x-1] - minEnergy) / range) * (height - 4);
-                const prevY = height - 3 - Math.floor(prevNormalizedY);
+            // Draw vertical connecting lines
+            if (prevY !== y) {
+                const start = Math.min(prevY, y);
+                const end = Math.max(prevY, y);
                 
-                // Draw a line between the two points
+                for (let i = start + 1; i < end; i++) {
+                    graphArray[i][x] = '┃';
+                }
+                
+                // Add connecting corners
                 if (prevY < y) {
-                    // Line going down
-                    for (let i = prevY + 1; i < y; i++) {
-                        graphArray[i][x] = '│';
-                    }
-                } else if (prevY > y) {
-                    // Line going up
-                    for (let i = y + 1; i < prevY; i++) {
-                        graphArray[i][x] = '│';
-                    }
+                    graphArray[prevY][x] = '┗';
+                    graphArray[y][x] = '┓';
+                } else {
+                    graphArray[prevY][x] = '┛';
+                    graphArray[y][x] = '┏';
                 }
-                
-                // Draw diagonal connectors
-                if (prevY !== y) {
-                    const connector = prevY < y ? '╭' : '╰';
-                    graphArray[prevY][x] = connector;
-                    
-                    const endConnector = prevY < y ? '╯' : '╮';
-                    graphArray[y][x] = endConnector;
-                }
+            } else {
+                // Same level - use horizontal connector
+                graphArray[y][x] = '━';
             }
         }
     }
     
-    // Add axes
-    for (let x = 1; x < width; x++) {
-        graphArray[height - 2][x] = '─';
-    }
-    for (let y = 0; y < height - 2; y++) {
-        graphArray[y][1] = '│';
-    }
-    graphArray[height - 2][1] = '┼';
-    
-    // Add min/max indicators
-    if (maxEnergy !== minEnergy) {
-        const maxStr = formatNumber(maxEnergy);
-        const minStr = formatNumber(minEnergy);
-        
-        // Place max value at top
-        if (maxStr.length <= width-2) {
-            for (let i = 0; i < maxStr.length; i++) {
-                graphArray[1][i+2] = maxStr[i];
-            }
-        }
-        
-        // Place min value at bottom
-        if (minStr.length <= width-2) {
-            for (let i = 0; i < minStr.length; i++) {
-                graphArray[height-3][i+2] = minStr[i];
-            }
+    // Add current energy value to graph
+    const currentValueStr = 'Now: ' + formatNumber(energy);
+    for (let i = 0; i < Math.min(currentValueStr.length, width - 2); i++) {
+        if (1 + i < width) {
+            graphArray[0][1 + i] = currentValueStr[i];
         }
     }
     
