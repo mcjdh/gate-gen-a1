@@ -1940,6 +1940,12 @@ function ensureAudioUnlocked(event) {
 
 // Initialize audio unlocking for all buttons when DOM is loaded
 document.addEventListener('DOMContentLoaded', function() {
+    // Ensure dark mode class is present
+    if (!document.body.classList.contains('dark-mode')) {
+        console.log("Restoring dark-mode class");
+        document.body.classList.add('dark-mode');
+    }
+
     addAudioUnlockToButtons();
     
     // Also observe DOM for any new buttons added after page load

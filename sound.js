@@ -78,28 +78,50 @@ function showAudioUnlockPrompt() {
         `;
         audioUnlockPrompt.style.position = 'fixed';
         audioUnlockPrompt.style.bottom = '20px';
-        audioUnlockPrompt.style.right = '20px';
-        audioUnlockPrompt.style.backgroundColor = 'rgba(0, 0, 0, 0.8)';
-        audioUnlockPrompt.style.color = '#fff';
-        audioUnlockPrompt.style.padding = '10px';
-        audioUnlockPrompt.style.borderRadius = '5px';
+        audioUnlockPrompt.style.left = '20px'; // Move to left side per user feedback
         audioUnlockPrompt.style.zIndex = '1000';
         audioUnlockPrompt.style.fontSize = '14px';
         audioUnlockPrompt.style.textAlign = 'center';
-        audioUnlockPrompt.style.fontFamily = 'monospace';
-        audioUnlockPrompt.style.border = '1px solid #333';
-        audioUnlockPrompt.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.5)';
+        
+        // Apply different styles based on dark mode
+        if (document.body.classList.contains('dark-mode')) {
+            // Dark mode styling
+            audioUnlockPrompt.style.backgroundColor = 'rgba(26, 26, 26, 0.9)';
+            audioUnlockPrompt.style.color = '#e0e0e0';
+            audioUnlockPrompt.style.fontFamily = "'VT323', monospace";
+            audioUnlockPrompt.style.border = '1px solid #444';
+            audioUnlockPrompt.style.boxShadow = '0 0 10px rgba(200, 200, 200, 0.2)';
+        } else {
+            // Light mode styling
+            audioUnlockPrompt.style.backgroundColor = 'rgba(255, 255, 255, 0.9)';
+            audioUnlockPrompt.style.color = '#333';
+            audioUnlockPrompt.style.fontFamily = 'sans-serif';
+            audioUnlockPrompt.style.border = '1px solid #ddd';
+            audioUnlockPrompt.style.boxShadow = '0 0 10px rgba(0, 0, 0, 0.1)';
+        }
+        
+        audioUnlockPrompt.style.padding = '10px';
+        audioUnlockPrompt.style.borderRadius = '5px';
         
         // Style the button to match the game's aesthetics
         const button = audioUnlockPrompt.querySelector('button');
         if (button) {
-            button.style.backgroundColor = '#222';
-            button.style.color = '#fff';
-            button.style.border = '1px solid #444';
+            if (document.body.classList.contains('dark-mode')) {
+                // Dark mode button
+                button.style.backgroundColor = '#333';
+                button.style.color = '#e0e0e0';
+                button.style.border = '1px solid #555';
+                button.style.fontFamily = "'VT323', monospace";
+            } else {
+                // Light mode button
+                button.style.backgroundColor = '#007bff';
+                button.style.color = 'white';
+                button.style.border = '1px solid #0056b3';
+            }
             button.style.padding = '5px 10px';
             button.style.cursor = 'pointer';
             button.style.marginTop = '5px';
-            button.style.fontFamily = 'monospace';
+            button.style.borderRadius = '4px';
         }
         
         // Add explicit click handler for the button
@@ -119,8 +141,23 @@ function showAudioUnlockPrompt() {
         });
         
         document.body.appendChild(audioUnlockPrompt);
+        
+        // Set a timeout to auto-hide the prompt after 10 seconds
+        // This prevents it from staying on screen indefinitely if the user doesn't interact with it
+        setTimeout(() => {
+            if (audioUnlockPromptVisible) {
+                hideAudioUnlockPrompt();
+            }
+        }, 10000);
     } else {
         audioUnlockPrompt.style.display = 'block';
+        
+        // Also set auto-hide for when it's reshown
+        setTimeout(() => {
+            if (audioUnlockPromptVisible) {
+                hideAudioUnlockPrompt();
+            }
+        }, 10000);
     }
     
     audioUnlockPromptVisible = true;
@@ -1075,14 +1112,20 @@ function initAudio() {
         document.addEventListener(eventType, unlockHandler);
     });
     
-    // After a delay, check if we need to show the prompt
+    // After a longer delay, check if we need to show the prompt
+    // but only if no user interaction has happened yet
     setTimeout(() => {
         const ac = getAudioContext();
-        if (ac && ac.state !== 'running' && !isAudioUnlocked) {
+        // Only show prompt if audio context exists, is suspended, and audio hasn't been unlocked yet
+        // and no audio has started yet
+        if (ac && ac.state !== 'running' && !isAudioUnlocked && 
+            !ambientMusicStarted && !proceduralSongStarted) {
             console.log("Audio context still suspended after delay, showing prompt");
             showAudioUnlockPrompt();
+        } else {
+            console.log("No need to show audio prompt - audio state good or music already started");
         }
-    }, 1000);
+    }, 2000); // Longer delay to allow more time for first interaction
     
     // Also add a periodic check for audio context state
     const checkAudioInterval = setInterval(() => {
@@ -1119,8 +1162,19 @@ window.unlockAudioContext = unlockAudioContext;
 
 // Initialize audio system - handle both immediate load and DOMContentLoaded
 if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', initAudio);
+    document.addEventListener('DOMContentLoaded', function() {
+        // Make sure dark mode is still applied (in case something removed it)
+        if (!document.body.classList.contains('dark-mode')) {
+            console.log("Restoring dark-mode class");
+            document.body.classList.add('dark-mode');
+        }
+        initAudio();
+    });
 } else {
     // DOM already loaded, initialize immediately
+    if (!document.body.classList.contains('dark-mode')) {
+        console.log("Restoring dark-mode class");
+        document.body.classList.add('dark-mode');
+    }
     initAudio();
 } 
