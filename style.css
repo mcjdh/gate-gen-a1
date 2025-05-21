@@ -296,6 +296,40 @@ body.dark-mode #system-log-header {
     border-top: 1px dashed #555; /* Dark mode separator */
 }
 
+/* Energy Graph Container Styling */
+#energy-graph-container {
+    margin-top: 25px;
+    padding-top: 15px;
+    text-align: center;
+}
+
+.ascii-graph {
+    font-family: monospace;
+    white-space: pre;
+    line-height: 1.2;
+    background-color: #1a1a1a;
+    color: #e0e0e0; /* Light gray for monochrome style */
+    padding: 10px;
+    border-radius: 4px;
+    margin: 0 auto;
+    overflow: hidden;
+    width: fit-content;
+    border: 1px solid #333;
+    box-shadow: 0 0 8px rgba(255, 255, 255, 0.2);
+    text-align: left;
+    font-size: 13px;
+    letter-spacing: 0.2em;
+    text-shadow: 0 0 3px rgba(255, 255, 255, 0.7), 0 0 5px rgba(255, 255, 255, 0.4);
+}
+
+body:not(.dark-mode) .ascii-graph {
+    background-color: #f8f9fa;
+    color: #333; /* Dark gray for light mode */
+    border: 1px solid #dee2e6;
+    box-shadow: 0 0 8px rgba(0, 0, 0, 0.2);
+    text-shadow: 0 0 2px rgba(0, 0, 0, 0.5);
+}
+
 body:not(.dark-mode) #reset-container {
     border-top: 1px dashed #ddd; /* Light mode separator */
 }

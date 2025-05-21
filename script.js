@@ -84,12 +84,22 @@ let isCutsceneActive = false; // Flag to prevent cutscene overlap
 let ambientMusicStarted = false; // Flag to ensure music starts only once
 let proceduralSongStarted = false; // Flag for procedural song
 
+// Energy history for ASCII graph
+let energyHistory = [];
+const ENERGY_HISTORY_MAX_POINTS = 60; // 15 seconds at 0.25s per sample
+const ENERGY_HISTORY_SAMPLE_RATE = 250; // milliseconds
+let lastEnergySample = Date.now();
+let graphUpdateTimer; // Timer for continuous graph updates
+
 // --- LOCALSTORAGE SAVE/LOAD ---
 const GAME_SAVE_KEY = 'gatewayGeneratorSave';
 
 // System Log Elements
 const systemLogMessages = document.getElementById('system-log-messages');
 const MAX_LOG_MESSAGES = 20; // Keep the log from getting too long
+
+// Energy Graph Element
+const energyGraphDisplay = document.getElementById('energy-graph-display');
 
 // Reset Game Button Element
 const resetGameButton = document.getElementById('reset-game-button');
@@ -113,6 +123,10 @@ function resetGameToDefaults() {
     energyPerClick = 2;
     clickUpgradeLevel = 0;
     clickUpgradeCost = 5; 
+
+    // Reset energy history for graph
+    energyHistory = [];
+    lastEnergySample = Date.now();
 
     rpiOwned = 0;
     rpiCurrentCost = RPI_BASE_COST;
@@ -955,6 +969,11 @@ buyAiCoreButton.addEventListener('click', () => {
 function triggerWinCondition() {
     if (gameWon) return; // If already won, do nothing
     gameWon = true;
+    
+    // Clear the graph update timer
+    if (graphUpdateTimer) {
+        clearInterval(graphUpdateTimer);
+    }
 
     addLogMessage("AI Gateway Core online. THE VOICE Protocol active. The Gateway awaits the First Resonance for the Convergence.", "milestone");
     saveGameState(); // Save a final time before the end screen
@@ -1243,9 +1262,24 @@ if (resetGameButton) {
     resetGameButton.addEventListener('click', () => {
         if (window.confirm("Are you sure you want to reset all your game progress? This cannot be undone.")) {
             localStorage.removeItem(GAME_SAVE_KEY);
+            
+            // Clear existing graph update timer
+            if (graphUpdateTimer) {
+                clearInterval(graphUpdateTimer);
+            }
+            
             resetGameToDefaults();
             calculateAllEps();
             updateDisplays();
+            
+            // Reinitialize the energy history graph
+            initializeEnergyHistory();
+            
+            // Restart graph update timer
+            graphUpdateTimer = setInterval(() => {
+                updateEnergyHistory();
+            }, ENERGY_HISTORY_SAMPLE_RATE);
+            
             addLogMessage("Game progress has been manually reset.", "info");
         }
     });
@@ -1290,6 +1324,7 @@ function gameLoop() {
     }
 
     updateDisplays();
+    updateEnergyHistory(); // Update energy history for ASCII graph
     lastTick = now;
 }
 
@@ -1297,6 +1332,155 @@ function gameLoop() {
 loadGameState(); // Load game state first
 calculateAllEps(); // Then calculate EPS based on loaded values
 updateDisplays(); // Then update all displays
+
+// Initialize energy history with current energy value to have some initial data
+function initializeEnergyHistory() {
+    // Clear any existing history
+    energyHistory = [];
+    
+    // Add current energy value multiple times to create initial data
+    for (let i = 0; i < ENERGY_HISTORY_MAX_POINTS; i++) {
+        energyHistory.push(energy);
+    }
+    
+    // Update the graph with this initial data
+    updateAsciiGraph();
+}
+
+// Call it to initialize the graph
+initializeEnergyHistory();
+
+// Set up continuous graph updates
+graphUpdateTimer = setInterval(() => {
+    updateEnergyHistory();
+}, ENERGY_HISTORY_SAMPLE_RATE);
+
+// --- ASCII ENERGY GRAPH FUNCTIONS ---
+/**
+ * Updates the energy history array for the ASCII graph
+ */
+function updateEnergyHistory() {
+    const now = Date.now();
+    // Always add a new sample point at the appropriate rate
+    if (now - lastEnergySample >= ENERGY_HISTORY_SAMPLE_RATE) {
+        // If we have at least one point, and the energy hasn't changed,
+        // add a very slight variation to make the graph more interesting
+        if (energyHistory.length > 0 && Math.abs(energy - energyHistory[energyHistory.length - 1]) < 0.001) {
+            // Add a tiny random variation to create visual interest when energy is static
+            const variation = energy * 0.001 * (Math.random() - 0.5);
+            energyHistory.push(energy + variation);
+        } else {
+            energyHistory.push(energy);
+        }
+        
+        if (energyHistory.length > ENERGY_HISTORY_MAX_POINTS) {
+            energyHistory.shift();
+        }
+        lastEnergySample = now;
+        updateAsciiGraph();
+    }
+}
+
+/**
+ * Renders an ASCII graph of energy history
+ */
+function updateAsciiGraph() {
+    const graph = document.getElementById('energy-graph-display');
+    if (!graph || energyHistory.length < 2) return;
+    
+    const width = 16;
+    const height = 12;
+    
+    // Create empty graph canvas
+    let graphArray = Array(height).fill().map(() => Array(width).fill(' '));
+    
+    // Calculate min and max for scaling
+    let minEnergy = Math.min(...energyHistory);
+    let maxEnergy = Math.max(...energyHistory);
+    
+    // Ensure there's always some range to display
+    if (maxEnergy === minEnergy) {
+        minEnergy = Math.max(0, minEnergy - minEnergy * 0.1);
+        maxEnergy = maxEnergy + maxEnergy * 0.1 || 1;
+    }
+    
+    const range = maxEnergy - minEnergy;
+    
+    // Plot the energy history points
+    const points = energyHistory.slice(-width); // Get the last 'width' points
+    
+    // Draw axes
+    for (let x = 0; x < width; x++) {
+        graphArray[height - 1][x] = '─';
+    }
+    for (let y = 0; y < height; y++) {
+        graphArray[y][0] = '│';
+    }
+    graphArray[height - 1][0] = '┼';
+    
+    // Add axes labels
+    graphArray[0][0] = 'E';
+    graphArray[1][0] = 'N';
+    graphArray[2][0] = 'O';
+    graphArray[3][0] = 'W';
+    
+    graphArray[height-1][width-5] = 'T';
+    graphArray[height-1][width-4] = 'I';
+    graphArray[height-1][width-3] = 'M';
+    graphArray[height-1][width-2] = 'E';
+    graphArray[height-1][width-1] = '→';
+    
+    // Draw points and connecting lines
+    for (let x = 0; x < points.length; x++) {
+        if (x >= width - 1) break; // Stay within bounds
+        
+        const normalizedY = ((points[x] - minEnergy) / range) * (height - 3);
+        const y = Math.max(0, Math.min(height - 2, height - 2 - Math.floor(normalizedY)));
+        
+        // Use different characters for the data points
+        graphArray[y][x+1] = x % 2 === 0 ? '█' : '▓';
+        
+        // Connect points with lines if not the first point
+        if (x > 0) {
+            const prevY = Math.max(0, Math.min(height - 2, height - 2 - Math.floor(((points[x-1] - minEnergy) / range) * (height - 3))));
+            
+            // Draw vertical connecting lines
+            if (prevY !== y) {
+                const start = Math.min(prevY, y);
+                const end = Math.max(prevY, y);
+                
+                for (let i = start + 1; i < end; i++) {
+                    graphArray[i][x] = '║';
+                }
+                
+                // Add connecting corners
+                if (prevY < y) {
+                    graphArray[prevY][x] = '╚';
+                    graphArray[y][x] = '╗';
+                } else {
+                    graphArray[prevY][x] = '╝';
+                    graphArray[y][x] = '╔';
+                }
+            } else {
+                // Same level - use horizontal connector
+                graphArray[y][x] = '═';
+            }
+        }
+    }
+    
+    // Add current energy value to graph
+    const currentValueStr = 'Now: ' + formatNumber(energy);
+    for (let i = 0; i < Math.min(currentValueStr.length, width - 2); i++) {
+        if (1 + i < width) {
+            graphArray[0][1 + i] = currentValueStr[i];
+        }
+    }
+    
+    // Convert to string
+    const graphStr = graphArray.map(row => row.join('')).join('\n');
+    
+    graph.textContent = graphStr;
+}
 
 setInterval(gameLoop, 100); // Run game loop 10 times per second
 setInterval(saveGameState, 30000); // Autosave every 30 seconds
