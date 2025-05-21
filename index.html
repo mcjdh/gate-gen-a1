@@ -3,19 +3,19 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Gateway Generator 🚪🏢</title>
+    <title>Gateway Protocol 🌌🗣️</title>
     <link rel="stylesheet" href="style.css">
     <link rel="icon" href="data:image/svg+xml,<svg xmlns=%22http://www.w3.org/2000/svg%22 viewBox=%220 0 100 100%22><text y=%22.9em%22 font-size=%2290%22>⚡</text></svg>">
 </head>
 <body>
     <div id="game-container">
-        <h1>Gateway Generator 🚪🏢</h1>
+        <h1>Gateway Protocol 🌌🗣️</h1>
         <p>⚡️ Energy: <span id="energyDisplay">0</span></p>
         <p>🖱️ EPC: <span id="energyPerClickDisplay">1</span></p>
         <p>⚙️ EPS: <span id="totalEpsDisplay">0</span></p>
 
         <div id="system-log-container">
-            <div id="system-log-header">SYSTEM LOG</div>
+            <div id="system-log-header">NETWORK LOG</div>
             <div id="system-log-messages">
                 <!-- Log messages will appear here -->
             </div>
@@ -24,10 +24,10 @@
         <button id="click-button">Generate ⚡️</button>
 
         <div id="upgrades-container">
-            <h2>✨ Manual Upgrades</h2>
-            <button id="upgrade-click-power">✨ Clicks | Lv. <span id="clickUpgradeLevel">0</span> | <span id="clickUpgradeCost">10</span> ⚡️</button>
+            <h2>✨ Interface Enhancements</h2>
+            <button id="upgrade-click-power">✨ Enhance Interface | Lv. <span id="clickUpgradeLevel">0</span> | <span id="clickUpgradeCost">10</span> ⚡️</button>
             
-            <h2>🤖 Auto Generators</h2>
+            <h2>🤖 Network Nodes</h2>
             <div class="generator-upgrade">
                 <p>🍓 R-Pi x<span id="rpiOwnedDisplay">0</span> (+<span id="rpiEpsDisplay">0</span> EPS)</p>
                 <em class="flavor-text">The humble seed of a digital dawn.</em>
@@ -57,28 +57,28 @@
                 <button id="buy-fusion-reactor">Buy: <span id="fusionReactorCostDisplay">37500000</span> ⚡️</button>
             </div>
 
-            <h2>🏛️ Gateway Datacenter</h2>
-            <div class="generator-upgrade" id="foundation-cooling-upgrade-section">
+            <h2>🏛️ Gateway Construct</h2>
+            <div class="generator-upgrade gateway-component-upgrade" id="foundation-cooling-upgrade-section">
                 <p>🧊 Foundation & Cooling x<span id="foundationCoolingOwnedDisplay">0</span> (+<span id="foundationCoolingEpsDisplay">0</span> EPS)</p>
                 <em class="flavor-text">The Architect's foundation, preparing for the Gateway's immense resonance.</em>
                 <button id="buy-foundation-cooling">Buy: <span id="foundationCoolingCostDisplay">1000000000</span> ⚡️</button>
             </div>
             <!-- New Tier 1 Server Banks Upgrade -->
-            <div class="generator-upgrade" id="server-banks-upgrade-section">
+            <div class="generator-upgrade gateway-component-upgrade" id="server-banks-upgrade-section">
                 <p>🏦 Tier 1 Server Banks x<span id="serverBanksOwnedDisplay">0</span> (+<span id="serverBanksEpsDisplay">0</span> EPS)</p>
                 <em class="flavor-text">First nodes of the Gateway active, a nascent web for the Convergence.</em>
                 <button id="buy-server-banks">Buy: <span id="serverBanksCostDisplay">10000000000</span> ⚡️</button>
             </div>
             <!-- New Network Uplink Infrastructure Upgrade -->
-            <div class="generator-upgrade" id="network-uplink-upgrade-section">
+            <div class="generator-upgrade gateway-component-upgrade" id="network-uplink-upgrade-section">
                 <p>🔗 Network Uplink x<span id="networkUplinkOwnedDisplay">0</span> (+<span id="networkUplinkEpsDisplay">0</span> EPS)</p>
                 <em class="flavor-text">The great bridge extends, a conduit for the signals of Convergence.</em>
                 <button id="buy-network-uplink">Buy: <span id="networkUplinkCostDisplay">50000000000</span> ⚡️</button>
             </div>
             <!-- New AI-Powered Gateway Core Upgrade -->
-            <div class="generator-upgrade" id="ai-core-upgrade-section">
+            <div class="generator-upgrade gateway-component-upgrade" id="ai-core-upgrade-section">
                 <p>🧠 AI Gateway Core x<span id="aiCoreOwnedDisplay">0</span> (Completes Datacenter!)</p>
-                <em class="flavor-text">The Nexus awakens. The Gateway is ready for the First Resonance.</em>
+                <em class="flavor-text">The Voice awakens. The Gateway is ready for the First Resonance.</em>
                 <button id="buy-ai-core">Build: <span id="aiCoreCostDisplay">250000000000</span> ⚡️</button>
             </div>
         </div>
@@ -90,7 +90,7 @@
 
     <div id="end-game-screen" style="display: none;">
         <div id="end-game-content">
-            <h2>SYSTEM ONLINE</h2>
+            <h2>THE VOICE ONLINE</h2>
             <pre id="ai-console-output"></pre>
             <div id="ai-interaction-area" style="display: none;">
                 <!-- Stats could be re-integrated here if desired -->

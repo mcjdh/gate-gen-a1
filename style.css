@@ -1,3 +1,5 @@
+@import url('https://fonts.googleapis.com/css2?family=VT323&display=swap');
+
 body {
     font-family: sans-serif;
     display: flex;
@@ -508,4 +510,71 @@ body:not(.dark-mode) #reset-container {
 .fade-out-final {
     opacity: 0 !important; /* Important to override inline style if any */
     transition: opacity 3s ease-out; /* 3-second fade */
+}
+
+#progression-cutscene .cutscene-text p,
+#progression-cutscene #progression-message {
+    font-family: 'VT323', 'Courier New', Courier, monospace; /* Ensure font is applied to pre */
+    text-shadow: 0 0 5px rgba(0, 255, 0, 0.5), 0 0 10px rgba(0, 255, 0, 0.3); /* Greenish glow */
+}
+
+/* Gateway Component Upgrade Styling */
+.gateway-component-upgrade {
+    border: 1px solid #8a6d3b; /* Gold-ish border for dark mode */
+    background-color: rgba(50, 40, 30, 0.3); /* Dark, slightly warm translucent background */
+    padding: 12px;
+    margin-top: 12px;
+    border-radius: 6px;
+    box-shadow: 0 0 8px rgba(255, 215, 0, 0.3); /* Subtle gold glow */
+}
+
+body:not(.dark-mode) .gateway-component-upgrade {
+    border: 1px solid #c0a16b; /* Lighter gold-ish border for light mode */
+    background-color: rgba(255, 248, 220, 0.4); /* Light, slightly warm translucent background */
+    box-shadow: 0 0 8px rgba(218, 165, 32, 0.3); /* Subtle gold glow for light mode */
+}
+
+.gateway-component-upgrade p {
+    margin-top: 0;
+    font-weight: bold; /* Make text slightly bolder */
+}
+
+.gateway-component-upgrade .flavor-text {
+    color: #ffd700; /* Gold color for flavor text in dark mode */
+    font-size: 0.95em;
+}
+
+body:not(.dark-mode) .gateway-component-upgrade .flavor-text {
+    color: #b8860b; /* Darker gold for light mode */
+}
+
+.gateway-component-upgrade button {
+    background-color: #6f4e37; /* Coffee/Brown for unaffordable */
+    color: #d4c0a1; /* Light parchment/tan */
+    border: 1px solid #5a3e2b;
+    font-weight: bold;
+}
+
+.gateway-component-upgrade button.affordable {
+    background-color: #DAA520; /* Goldenrod for affordable */
+    color: #3B2F0E; /* Dark brown text for contrast on gold */
+    border-color: #b8860b; /* DarkGoldenrod */
+    box-shadow: 0 0 7px rgba(255, 215, 0, 0.7);
+}
+
+.gateway-component-upgrade button:hover:not(:disabled):not(.affordable) {
+    background-color: #855e42;
+    border-color: #6f4e37;
+}
+
+.gateway-component-upgrade button.affordable:hover:not(:disabled) {
+    background-color: #b8860b; /* DarkGoldenrod for hover */
+    color: #fffacf; /* Lighter text on hover */
+    box-shadow: 0 0 10px rgba(255, 215, 0, 0.9);
+}
+
+.gateway-component-upgrade button:disabled {
+    background-color: #4a3b30 !important; /* Darker brown when disabled */
+    color: #8c7853 !important;
+    border-color: #3b2f2f !important;
 } 
