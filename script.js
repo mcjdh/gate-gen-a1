@@ -84,12 +84,21 @@ let isCutsceneActive = false; // Flag to prevent cutscene overlap
 let ambientMusicStarted = false; // Flag to ensure music starts only once
 let proceduralSongStarted = false; // Flag for procedural song
 
+// Energy history for ASCII graph
+let energyHistory = [];
+const ENERGY_HISTORY_MAX_POINTS = 60; // 15 seconds at 0.25s per sample
+const ENERGY_HISTORY_SAMPLE_RATE = 250; // milliseconds
+let lastEnergySample = Date.now();
+
 // --- LOCALSTORAGE SAVE/LOAD ---
 const GAME_SAVE_KEY = 'gatewayGeneratorSave';
 
 // System Log Elements
 const systemLogMessages = document.getElementById('system-log-messages');
 const MAX_LOG_MESSAGES = 20; // Keep the log from getting too long
+
+// Energy Graph Element
+const energyGraphDisplay = document.getElementById('energy-graph-display');
 
 // Reset Game Button Element
 const resetGameButton = document.getElementById('reset-game-button');
@@ -113,6 +122,10 @@ function resetGameToDefaults() {
     energyPerClick = 2;
     clickUpgradeLevel = 0;
     clickUpgradeCost = 5; 
+
+    // Reset energy history for graph
+    energyHistory = [];
+    lastEnergySample = Date.now();
 
     rpiOwned = 0;
     rpiCurrentCost = RPI_BASE_COST;
@@ -1290,6 +1303,7 @@ function gameLoop() {
     }
 
     updateDisplays();
+    updateEnergyHistory(); // Update energy history for ASCII graph
     lastTick = now;
 }
 
@@ -1297,6 +1311,130 @@ function gameLoop() {
 loadGameState(); // Load game state first
 calculateAllEps(); // Then calculate EPS based on loaded values
 updateDisplays(); // Then update all displays
+
+// --- ASCII ENERGY GRAPH FUNCTIONS ---
+/**
+ * Updates the energy history array for the ASCII graph
+ */
+function updateEnergyHistory() {
+    const now = Date.now();
+    if (now - lastEnergySample >= ENERGY_HISTORY_SAMPLE_RATE) {
+        energyHistory.push(energy);
+        if (energyHistory.length > ENERGY_HISTORY_MAX_POINTS) {
+            energyHistory.shift();
+        }
+        lastEnergySample = now;
+        updateAsciiGraph();
+    }
+}
+
+/**
+ * Renders an ASCII graph of energy history
+ */
+function updateAsciiGraph() {
+    const graph = document.getElementById('energy-graph-display');
+    if (!graph || energyHistory.length < 2) return;
+    
+    const width = 16;
+    const height = 16;
+    
+    // Create empty graph canvas
+    let graphArray = Array(height).fill().map(() => Array(width).fill(' '));
+    
+    // Calculate min and max for scaling
+    const minEnergy = Math.min(...energyHistory);
+    const maxEnergy = Math.max(...energyHistory);
+    const range = maxEnergy - minEnergy || 1; // Prevent division by zero
+    
+    // Plot the energy history points
+    const points = energyHistory.slice(-width); // Get the last 'width' points
+    
+    // Add axes labels
+    graphArray[0][0] = 'E';
+    graphArray[1][0] = 'N';
+    graphArray[2][0] = 'E';
+    graphArray[3][0] = 'R';
+    graphArray[4][0] = 'G';
+    graphArray[5][0] = 'Y';
+    
+    graphArray[height-1][width-5] = 'T';
+    graphArray[height-1][width-4] = 'I';
+    graphArray[height-1][width-3] = 'M';
+    graphArray[height-1][width-2] = 'E';
+    graphArray[height-1][width-1] = '>';
+    
+    // Draw points and connecting lines
+    for (let x = 0; x < points.length; x++) {
+        const normalizedY = ((points[x] - minEnergy) / range) * (height - 4);
+        const y = height - 3 - Math.floor(normalizedY);
+        
+        if (y >= 0 && y < height - 1) {
+            graphArray[y][x+1] = '█'; // Use a solid block for points
+            
+            // If this isn't the first point, draw a connection to the previous point
+            if (x > 0) {
+                const prevNormalizedY = ((points[x-1] - minEnergy) / range) * (height - 4);
+                const prevY = height - 3 - Math.floor(prevNormalizedY);
+                
+                // Draw a line between the two points
+                if (prevY < y) {
+                    // Line going down
+                    for (let i = prevY + 1; i < y; i++) {
+                        graphArray[i][x] = '│';
+                    }
+                } else if (prevY > y) {
+                    // Line going up
+                    for (let i = y + 1; i < prevY; i++) {
+                        graphArray[i][x] = '│';
+                    }
+                }
+                
+                // Draw diagonal connectors
+                if (prevY !== y) {
+                    const connector = prevY < y ? '╭' : '╰';
+                    graphArray[prevY][x] = connector;
+                    
+                    const endConnector = prevY < y ? '╯' : '╮';
+                    graphArray[y][x] = endConnector;
+                }
+            }
+        }
+    }
+    
+    // Add axes
+    for (let x = 1; x < width; x++) {
+        graphArray[height - 2][x] = '─';
+    }
+    for (let y = 0; y < height - 2; y++) {
+        graphArray[y][1] = '│';
+    }
+    graphArray[height - 2][1] = '┼';
+    
+    // Add min/max indicators
+    if (maxEnergy !== minEnergy) {
+        const maxStr = formatNumber(maxEnergy);
+        const minStr = formatNumber(minEnergy);
+        
+        // Place max value at top
+        if (maxStr.length <= width-2) {
+            for (let i = 0; i < maxStr.length; i++) {
+                graphArray[1][i+2] = maxStr[i];
+            }
+        }
+        
+        // Place min value at bottom
+        if (minStr.length <= width-2) {
+            for (let i = 0; i < minStr.length; i++) {
+                graphArray[height-3][i+2] = minStr[i];
+            }
+        }
+    }
+    
+    // Convert to string
+    const graphStr = graphArray.map(row => row.join('')).join('\n');
+    
+    graph.textContent = graphStr;
+}
 
 setInterval(gameLoop, 100); // Run game loop 10 times per second
 setInterval(saveGameState, 30000); // Autosave every 30 seconds

@@ -296,6 +296,33 @@ body.dark-mode #system-log-header {
     border-top: 1px dashed #555; /* Dark mode separator */
 }
 
+/* Energy Graph Container Styling */
+#energy-graph-container {
+    margin-top: 25px;
+    padding-top: 15px;
+    text-align: center;
+}
+
+.ascii-graph {
+    font-family: monospace;
+    white-space: pre;
+    line-height: 1;
+    background-color: #1a1a1a;
+    color: #4dff4d; /* Terminal green color */
+    padding: 10px;
+    border-radius: 4px;
+    margin: 0 auto;
+    overflow: hidden;
+    width: fit-content;
+    border: 1px solid #333;
+}
+
+body:not(.dark-mode) .ascii-graph {
+    background-color: #f8f9fa;
+    color: #28a745; /* Bootstrap green */
+    border: 1px solid #dee2e6;
+}
+
 body:not(.dark-mode) #reset-container {
     border-top: 1px dashed #ddd; /* Light mode separator */
 }
