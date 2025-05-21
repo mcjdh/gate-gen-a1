@@ -1904,4 +1904,63 @@ function formatNumber(num) {
     else if (val >= 10) val = parseFloat(val.toFixed(1));
     else val = parseFloat(val.toFixed(2));
     return val + suffixes[i];
-} 
+}
+
+// --- AUDIO HANDLING HELPERS ---
+
+// Add an audio unlocking function to all buttons
+function addAudioUnlockToButtons() {
+    const buttons = document.querySelectorAll('button');
+    buttons.forEach(button => {
+        // Add the listener as the first event that fires
+        button.addEventListener('click', ensureAudioUnlocked, { capture: true });
+        button.addEventListener('touchstart', ensureAudioUnlocked, { capture: true });
+    });
+}
+
+// Function to ensure audio is unlocked before other button actions
+function ensureAudioUnlocked(event) {
+    // Don't stop propagation - we want the original click to happen too
+    if (typeof unlockAudioContext === 'function') {
+        unlockAudioContext();
+    }
+    
+    // If this is the first interaction and audio needs to start
+    if (!ambientMusicStarted && typeof startAmbientMusic === 'function') {
+        startAmbientMusic();
+        ambientMusicStarted = true;
+    }
+    
+    if (!proceduralSongStarted && typeof startProceduralSong === 'function') {
+        startProceduralSong();
+        proceduralSongStarted = true;
+        addLogMessage("Sound system initialized: Procedural melody online.", "system");
+    }
+}
+
+// Initialize audio unlocking for all buttons when DOM is loaded
+document.addEventListener('DOMContentLoaded', function() {
+    addAudioUnlockToButtons();
+    
+    // Also observe DOM for any new buttons added after page load
+    const observer = new MutationObserver(function(mutations) {
+        mutations.forEach(function(mutation) {
+            if (mutation.addedNodes.length) {
+                mutation.addedNodes.forEach(function(node) {
+                    if (node.tagName === 'BUTTON') {
+                        node.addEventListener('click', ensureAudioUnlocked, { capture: true });
+                        node.addEventListener('touchstart', ensureAudioUnlocked, { capture: true });
+                    } else if (node.querySelectorAll) {
+                        const childButtons = node.querySelectorAll('button');
+                        childButtons.forEach(button => {
+                            button.addEventListener('click', ensureAudioUnlocked, { capture: true });
+                            button.addEventListener('touchstart', ensureAudioUnlocked, { capture: true });
+                        });
+                    }
+                });
+            }
+        });
+    });
+    
+    observer.observe(document.body, { childList: true, subtree: true });
+}); 
